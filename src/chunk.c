@@ -4,7 +4,7 @@ const char *ASCII = "-*";
 const char *SURROUND = "012345678";
 
 void drawChunk(struct chunk *chunk){
-	drawBuf(chunk->board, ASCII);
+	drawBuf(chunk->board, ASCII, 0);
 }
 bval getv(struct chunk *chunk, int x, int y){
 	if(x >= 0 && y >= 0 && x < CHUNKSIZE && y < CHUNKSIZE)
@@ -34,14 +34,14 @@ void calculateChunk(struct chunk *chunk){
 		change[i] = v;
 	endloop
 
-	drawBuf(change, SURROUND);
+	drawBuf(change, SURROUND, CHUNKSIZE + 1);
 
-	loop
 /*Any live cell with fewer than two live neighbours dies, as if caused by under-population.
  *Any live cell with two or three live neighbours lives on to the next generation.
  *Any live cell with more than three live neighbours dies, as if by over-population.
  *Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
  */
+	loop
 		if(chunk->board[i]){
 			if(change[i] < 2 || change[i] > 3){
 				chunk->board[i] = 0;

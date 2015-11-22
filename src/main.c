@@ -3,7 +3,8 @@
 #include "chunk.h"
 #include "board.h"
 
-void drawBuf(const bval *inbuf, const char *ascii){
+void drawBuf(const bval *inbuf, const char *ascii, int offset){
+#ifdef NOCURSES
 	char buf[CHUNKSIZE2 + CHUNKSIZE];
 	int bp = 0;
 	int i = 0;
@@ -17,10 +18,26 @@ void drawBuf(const bval *inbuf, const char *ascii){
 	}
 	buf[sizeof(buf)] = '\0';
 	printf("%s", buf);
+	(void) offset;
+#else
+	for(int y = 0; y < CHUNKSIZE; y++){
+		for(int x = 0; x < CHUNKSIZE; x++){
+			mvaddch(x + offset, y, ascii[inbuf[at(x, y)]]);
+		}
+	}
+#endif
 }
 
+#ifdef NOCURSES
+	#define initscr() ;
+	#define refresh() ;
+	#define endwin() ;
+#endif
+
 int main(void){
+	initscr();
 	struct board *b = createBoard();
+
 	addChunk(b, 0, 0);
 	struct chunk c = b->chunks[0];
 	c.board[at(0, 1)] = 1;
@@ -28,10 +45,29 @@ int main(void){
 	c.board[at(2, 2)] = 1;
 	c.board[at(2, 1)] = 1;
 	c.board[at(2, 0)] = 1;
-	for(int i = 0; i < 5; i++){
+	while(1){
 		drawChunk(&c);
 		calculateChunk(&c);
+		refresh();
+		switch(getch()){
+			case 'q':
+				goto CLEANUP;
+			case 'w':
+				break;
+			case 's':
+				break;
+			case 'a':
+				break;
+			case 'd':
+				break;
+			default:
+				break;
+		}
 	}
+	CLEANUP:
+
 	freeBoard(b);
+	endwin();
+	printf("Program complete");
 	return 0;
 }

@@ -11,6 +11,7 @@ bval getv(struct chunk *chunk, int x, int y){
 		return chunk->board[at(x, y)];
 	return 0;
 }
+
 #define expand(j, k) if(getv(chunk, ix + j, iy + k)) v++;
 #define loop \
 	for(ix = 0; ix < CHUNKSIZE; ix++){\
@@ -53,9 +54,7 @@ void calculateChunk(struct chunk *chunk){
 		}
 	endloop
 }
+
 #undef loop
 #undef endloop
 #undef expand
-void iterateChunk(struct chunk *chunk){
-	(void) chunk;
-}

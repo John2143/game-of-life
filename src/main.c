@@ -1,6 +1,5 @@
 #include "main.h"
 
-#include "chunk.h"
 #include "board.h"
 
 void drawBuf(const bval *inbuf, const char *ascii, int offset){
@@ -39,15 +38,16 @@ int main(void){
 	struct board *b = createBoard();
 
 	addChunk(b, 0, 0);
-	struct chunk c = b->chunks[0];
-	c.board[at(0, 1)] = 1;
-	c.board[at(1, 2)] = 1;
-	c.board[at(2, 2)] = 1;
-	c.board[at(2, 1)] = 1;
-	c.board[at(2, 0)] = 1;
+	setBoard(b, 0, 0);
+	curChunk(b).board[at(0, 1)] = 1;
+	curChunk(b).board[at(1, 2)] = 1;
+	curChunk(b).board[at(2, 2)] = 1;
+	curChunk(b).board[at(2, 1)] = 1;
+	curChunk(b).board[at(2, 0)] = 1;
+
 	while(1){
-		drawChunk(&c);
-		calculateChunk(&c);
+		drawBoard(b);
+		iterateBoard(b);
 		refresh();
 		switch(getch()){
 			case 'q':

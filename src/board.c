@@ -2,7 +2,7 @@
 
 void iterateBoard(struct board *board){
 	for(int i = 0; i < board->size; i++){
-		iterateChunk(&board->chunks[i]);
+		calculateChunk(&board->chunks[i]);
 	}
 }
 
@@ -29,4 +29,26 @@ struct board *createBoard(){
 void freeBoard(struct board *board){
 	free(board->chunks);
 	free(board);
+}
+
+int getChunkPos(struct board *b, int x, int y){
+	for(int i = 0; i < b->size; i++){
+		if(b->chunks[i].locx == x && b->chunks[i].locy == y){
+			return i;
+		}
+	}
+	return -1;
+}
+int moveBoard(struct board *b, int x, int y){
+	return setBoard(b, curChunk(b).locx + x, curChunk(b).locy + y);
+}
+int setBoard(struct board *b, int x, int y){
+	int pos = getChunkPos(b, x, y);
+	if(pos < 0) return -1;
+	b->curChunk = pos;
+	return 0;
+}
+void drawBoard(struct board *b){
+	if(b->size < b->curChunk) return;//TODO err
+	drawChunk(&curChunk(b));
 }

@@ -15,7 +15,6 @@ struct chunk{
 	int locx, locy;
 };
 
-void iterateChunk(struct chunk *chunk);
 void calculateChunk(struct chunk *chunk);
 bval getv(struct chunk *chunk, int x, int y);
 void drawChunk(struct chunk *chunk);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "chunk.h"
+#include "main.h"
 
 #define DEFAULTWIDTH 8
 
@@ -12,6 +13,7 @@ struct board{
 	int size;
 	int maxSize;
 	int curChunk;
+	int iterations;
 };
 
 void iterateBoard(struct board *board);
@@ -24,6 +26,6 @@ int moveBoard(struct board *b, int x, int y);
 int setBoard(struct board *b, int x, int y);
 void drawBoard(struct board *b);
 
-#define curChunk(b) (b->chunks[b->curChunk])
+#define curChunk(b) ((b)->chunks[(b)->curChunk])
 
 #endif

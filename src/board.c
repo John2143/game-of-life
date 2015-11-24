@@ -1,9 +1,19 @@
 #include "board.h"
 
+//Very trivial
+//TODO: reduce memory usage by updating chunks in a non brute force method
+
 void iterateBoard(struct board *board){
+	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
 	for(int i = 0; i < board->size; i++){
-		calculateChunk(&board->chunks[i]);
+		calculateChunk(&board->chunks[i], change[i]);
 	}
+	for(int i = 0; i < board->size; i++){
+		applyChange(&board->chunks[i], change[i]);
+	}
+	free(change);
+
+	board->iterations++;
 }
 
 void addChunk(struct board *b, int x, int y){
@@ -23,6 +33,7 @@ struct board *createBoard(){
 	b->size = 0;
 	b->maxSize = DEFAULTWIDTH;
 	b->chunks = malloc(DEFAULTWIDTH * sizeof(struct chunk));
+	b->iterations = 0;
 	return b;
 }
 
@@ -51,4 +62,8 @@ int setBoard(struct board *b, int x, int y){
 void drawBoard(struct board *b){
 	if(b->size < b->curChunk) return;//TODO err
 	drawChunk(&curChunk(b));
+	mvprintw(CHUNKSIZE + 1, 0, "At (%i, %i), Iteration (%i)",
+		curChunk(b).locx, curChunk(b).locy,
+		b->iterations
+	);
 }

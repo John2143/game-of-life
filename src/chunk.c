@@ -58,32 +58,69 @@ void drawChunk(struct chunk *chunk){
 	}
 }
 
-//TODO make this work off the chunk
-static bval getv(struct chunk *chunk, int x, int y){
-	if(x >= 0 && y >= 0 && x < CHUNKSIZE && y < CHUNKSIZE)
-		return chunk->board[at(x, y)];
-	return 0;
+int neighborDelta(int x, int y){
+	if(x == 0){
+		if(y == 0) return NE_HERE;
+		else if(y == 1) return NE_D;
+		else return NE_U;
+	}else if(x == 1){
+		if(y == 0) return NE_R;
+		else if(y == 1) return NE_DR;
+		else return NE_UR;
+	}else{
+		if(y == 0) return NE_L;
+		else if(y == 1) return NE_DL;
+		else return NE_UL;
+	}
 }
 
-#define expand(j, k) if(getv(chunk, ix + j, iy + k)) v++;
+int neighborOpposite(int n){
+	switch(n){
+	case NE_R: return NE_L;
+	case NE_L: return NE_R;
+	case NE_U: return NE_D;
+	case NE_D: return NE_U;
+	case NE_UR: return NE_DL;
+	case NE_DR: return NE_UL;
+	case NE_UL: return NE_DR;
+	case NE_DL: return NE_UR;
+	case NE_HERE: return NE_HERE;
+	default: return NE_NONE;
+	}
+}
+
+//Doesnt work if its more than one from the edge
+static bval getv(struct chunk *chunk, int x, int y){
+	if(!chunk) return 0;
+
+	int dx = 0, dy = 0;
+	if(x < 0){x = x + CHUNKSIZE; dx = -1;}
+	else if(x >= CHUNKSIZE){x = x - CHUNKSIZE; dx = 1;}
+
+	if(y < 0){y = y + CHUNKSIZE; dy = -1;}
+	else if(y >= CHUNKSIZE){y = y - CHUNKSIZE; dy = 1;}
+
+	int d = neighborDelta(dx, dy);
+	switch(d){
+		case NE_HERE: return chunk->board[at(x, y)];
+		case NE_NONE: return 0;//TODO error here
+		default: return getv(chunk->neighbors[d], x, y);
+	}
+}
+
+
 void calculateChunk(struct chunk *chunk, bval *change){
 	int v, ix, iy;
 	for(ix = 0; ix < CHUNKSIZE; ix++){
 		for(iy = 0; iy < CHUNKSIZE; iy++){
 			v = 0;
-			expand(-1, -1);
-			expand(0, -1);
-			expand(1, -1);
-			expand(-1, 0);
-			expand(1, 0);
-			expand(-1, 1);
-			expand(0, 1);
-			expand(1, 1);
+			#define X(j, k) if(getv(chunk, ix + j, iy + k)) v++;
+			EXPAND_DIRS
+			#undef X
 			change[at(ix, iy)] = v;
 		}
 	}
 }
-#undef expand
 
 /*Any live cell with fewer than two live neighbours dies, as if caused by under-population.
  *Any live cell with two or three live neighbours lives on to the next generation.

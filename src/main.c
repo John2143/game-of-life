@@ -17,6 +17,9 @@ void setgStrings(const char *a, const char *b){
 }
 
 int main(int argc, char **argv){
+#ifdef DEBUG
+	DEBUG_FILE = fopen("debug.txt", "w");
+#endif
 	initscr();
 	keypad(stdscr, TRUE);
 	noecho();
@@ -34,27 +37,37 @@ int main(int argc, char **argv){
 		"Use arrows/wasd to move. Press q to quit."
 	);
 
-	{
-	int c;
-	while((c = getopt (argc, argv, "c")) != -1){
-		switch(c)
+	char *PATTERN = NULL;
+	int getoptval;
+	while((getoptval = getopt (argc, argv, "cp:")) != -1){
+		switch(getoptval)
 		{
 		//Disable color
 		case 'c':
 			USECOLOR = 0;
 		break;
+		case 'p':
+			PATTERN = optarg;
+		break;
 		}
 	}
-	}
 	struct board *b = createBoard();
-
 	addChunk(b, 0, 0);
 	setBoard(b, 0, 0);
-	curChunk(b).board[at(0, 0)] = 1;
-	curChunk(b).board[at(1, 1)] = 1;
-	curChunk(b).board[at(1, 2)] = 1;
-	curChunk(b).board[at(2, 1)] = 1;
-	curChunk(b).board[at(2, 0)] = 1;
+#define on(x, y) curChunk(b).board[at(x, y)] = 1
+	if(PATTERN){
+		if(!strcmp(PATTERN, "glider")){
+			on(0, 0);
+			on(1, 1);
+			on(1, 2);
+			on(2, 1);
+			on(2, 0);
+		}
+	}
+#undef on
+
+//START TESTS
+//END TESTS
 
 	while(1){
 		drawBoard(b);

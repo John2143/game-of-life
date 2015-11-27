@@ -40,6 +40,11 @@ static int getInput(){
 	case 'c':
 		setgStrings("Iterating 100...", "");
 		return IN_RET(IN_ITERATE, 100);
+	case 'v':
+		setgStrings("Iterating 1000...", "");
+		return IN_RET(IN_ITERATE, 1000);
+	case 'g':
+		return IN_RUNGC;
 	default:
 		setgStrings("Invalid move.", "");
 		return IN_NOOP;
@@ -58,6 +63,8 @@ static int moveBoardHandler(struct board *b, int x, int y){
 
 int input(struct board *b){
 	int in = getInput(b);
+	char str1[32];
+	char str2[32];
 	switch(IN_GETL(in)){
 	case IN_QUIT: return IN_QUIT;
 	case IN_ITERATE:
@@ -78,10 +85,16 @@ int input(struct board *b){
 	case IN_MOVE_RIGHT:
 		moveBoardHandler(b, 1, 0);
 	break;
+	case IN_RUNGC:
+		sprintf(str1, "GC run on %i chunks...", b->size);
+		int c = collectGarbage(b);
+		sprintf(str2, "Removed %i chunks. New size %i.", c, b->size);
+		setgStrings(str1, str2);
+	break;
 	case IN_NOOP:
 	break;
 	default:
 		setgStrings("INTERNAL ERROR", "");
 	}
-	return in;
+	return 1;
 }

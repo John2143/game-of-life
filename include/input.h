@@ -20,6 +20,7 @@
 #define IN_MOVE_RIGHT 4
 #define IN_MOVE_DOWN  5
 #define IN_MOVE_UP    6
+#define IN_RUNGC      7
 
 int input(struct board *b);
 

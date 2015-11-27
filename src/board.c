@@ -1,8 +1,5 @@
 #include "board.h"
 
-//Very trivial
-//TODO: reduce memory usage by updating chunks in a non brute force method
-
 void iterateBoard(struct board *board){
 	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
 	for(int i = 0; i < board->size; i++){
@@ -25,6 +22,10 @@ void addChunk(struct board *b, int x, int y){
 	memset(&n->board, 0, CHUNKSIZE2);
 	n->locx = x;
 	n->locy = y;
+	int i = 8;
+	while(--i){
+		n->neighbors[i] = -1;
+	}
 	b->size++;
 }
 

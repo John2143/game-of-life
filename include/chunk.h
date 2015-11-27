@@ -4,8 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <curses.h>
 
-#include "main.h"
+#include "global.h"
+
+#define at(x, y) (y * CHUNKSIZE + x)
 
 #define CHUNKSIZE (1 << 4)
 #define CHUNKSIZE2 (CHUNKSIZE * CHUNKSIZE)
@@ -25,9 +28,12 @@ struct chunk{
 	int neighbors[8];
 };
 
+//Calculate an array of bvals that can be used to change the board
 void calculateChunk(struct chunk *chunk, bval *change);
+//Use the change array to mutate the chunk using the rules
 void applyChange(struct chunk *chunk, bval *change);
-//bval getv(struct chunk *chunk, int x, int y);
+//Draw the current chunk with its changemap
+//Running the program with -c will disasble colors
 void drawChunk(struct chunk *chunk);
 
 #endif

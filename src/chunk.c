@@ -18,6 +18,31 @@ static void calculateColorMapFromChange(struct chunk *chunk, bval *change, color
 	}
 }
 
+//Used to display the playing field. 0 is -, 1 is *
+static const char *ASCII = "-*";
+//Used to display the delta field. This is just faster than printf.
+static const char *SURROUND = "012345678";
+
+static void drawBuf(const bval *inbuf, const char *ascii, int offset){
+	attron(COLOR_PAIR(COL_LIVE));
+	for(int y = 0; y < CHUNKSIZE; y++){
+		for(int x = 0; x < CHUNKSIZE; x++){
+			mvaddch(x, y + offset, ascii[inbuf[at(x, y)]]);
+		}
+	}
+	attroff(COLOR_PAIR(COL_LIVE));
+}
+
+static void drawBufColor(const bval *inbuf, const char *ascii, int offset, const colormap *cols){
+	for(int y = 0; y < CHUNKSIZE; y++){
+		for(int x = 0; x < CHUNKSIZE; x++){
+			attron(COLOR_PAIR(cols[at(x, y)]));
+			mvaddch(x, y + offset, ascii[inbuf[at(x, y)]]);
+			attroff(COLOR_PAIR(cols[at(x, y)]));
+		}
+	}
+}
+
 void drawChunk(struct chunk *chunk){
 	drawBuf(chunk->board, ASCII, 0);
 
@@ -32,6 +57,8 @@ void drawChunk(struct chunk *chunk){
 		drawBuf(change, SURROUND, CHUNKSIZE + 1);
 	}
 }
+
+//TODO make this work off the chunk
 static bval getv(struct chunk *chunk, int x, int y){
 	if(x >= 0 && y >= 0 && x < CHUNKSIZE && y < CHUNKSIZE)
 		return chunk->board[at(x, y)];

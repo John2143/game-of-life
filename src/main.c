@@ -54,7 +54,7 @@ int main(int argc, char **argv){
 	struct board *b = createBoard();
 	addChunk(b, 0, 0);
 	setBoard(b, 0, 0);
-#define on(x, y) curChunk(b).board[at(x, y)] = 1
+#define on(x, y) curChunk(b)->board[at(x, y)] = 1
 	if(PATTERN){
 		if(!strcmp(PATTERN, "glider")){
 			on(0, 0);

@@ -16,6 +16,15 @@ struct board{
 	int iterations;
 };
 
+//Return a pointer to the index-th chunk
+#define getChunk(b, index) (&(b)->chunks[index])
+//#define getChunk(b, index) ((b)->chunk + (index) * sizeof(struct chunk))
+
+//The current chunk
+#define curChunk(b) getChunk(b, b->curChunk)
+//Get the next uninitialized memeory block. MAY BE OUT OF THE RANGE OF b->chunks
+#define nextChunk(b) getChunk(b, b->size)
+
 //Mutate the board by one time unit.
 //TODO: Make memory more efficient by calculating a better order
 //TODO: Decide how often to run the GC
@@ -44,7 +53,5 @@ void drawBoard(struct board *b);
 //Returns the number of chunks removed
 //This method may be referenced as "The GC"
 int collectGarbage(struct board *b);
-
-#define curChunk(b) ((b)->chunks[(b)->curChunk])
 
 #endif

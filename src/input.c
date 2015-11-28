@@ -55,7 +55,7 @@ static int getInput(){
 static int moveBoardHandler(struct board *b, int x, int y){
 	if(moveBoard(b, x, y) < 0){
 		char buf[GSTRINGSIZE];
-		sprintf(buf, "%i, %i is empty.", curChunk(b).locx + x, curChunk(b).locy + y);
+		sprintf(buf, "%i, %i is empty.", curChunk(b)->locx + x, curChunk(b)->locy + y);
 		setgStrings("You cannot move the board in that direction", buf);
 	}
 	return IN_NOOP;

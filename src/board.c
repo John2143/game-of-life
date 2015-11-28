@@ -4,8 +4,8 @@
 int generateNewChunks(struct board *b){
 	int size = b->size;
 	for(int i = 0; i < size; i++){
-		struct chunk c = b->chunks[i];
-		int x = c.locx, y = c.locy;
+		struct chunk *c = getChunk(b, i);
+		int x = c->locx, y = c->locy;
 		(void) x;
 		(void) y;
 	}
@@ -15,10 +15,10 @@ int generateNewChunks(struct board *b){
 void iterateBoard(struct board *board){
 	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
 	for(int i = 0; i < board->size; i++){
-		calculateChunk(&board->chunks[i], change[i]);
+		calculateChunk(getChunk(board, i), change[i]);
 	}
 	for(int i = 0; i < board->size; i++){
-		applyChange(&board->chunks[i], change[i]);
+		applyChange(getChunk(board, i), change[i]);
 	}
 	free(change);
 	board->iterations++;
@@ -30,7 +30,7 @@ int collectGarbage(struct board *b){
 	for(int i = 0; i < b->size; i++){
 		marked[i] = 1; //empty
 		for(int j = 0; j < CHUNKSIZE2; j++){
-			if(b->chunks[i].board[j]){
+			if(getChunk(b, i)->board[j]){
 				marked[i] = 0;
 				break;
 			}
@@ -47,11 +47,12 @@ int collectGarbage(struct board *b){
 		while(last > first && marked[last]) last--;
 		if(first >= last) break;
 		b->size = last;
-		memcpy(&b->chunks[first], &b->chunks[last], sizeof(struct chunk));
+		struct chunk *firstChunk = getChunk(b, first);
+		memcpy(firstChunk, getChunk(b, last), sizeof(struct chunk));
 		for(int i = 0; i < 8; i++){
-			if(b->chunks[first].neighbors[i]){
+			if(firstChunk->neighbors[i]){
 				//make all neighbors have the new pointer
-				b->chunks[first].neighbors[i]->neighbors[neighborOpposite(i)] = &b->chunks[first];
+				firstChunk->neighbors[i]->neighbors[neighborOpposite(i)] = firstChunk;
 			}
 		}
 		first++;
@@ -77,7 +78,7 @@ void addChunk(struct board *b, int x, int y){
 		b->chunks = realloc(b->chunks, b->maxSize * sizeof(struct chunk));
 	}
 
-	struct chunk *n = &b->chunks[b->size];
+	struct chunk *n = nextChunk(b);
 	memset(&n->board, 0, CHUNKSIZE2);
 	n->locx = x;
 	n->locy = y;
@@ -110,14 +111,14 @@ void freeBoard(struct board *board){
 
 int getChunkPos(struct board *b, int x, int y){
 	for(int i = 0; i < b->size; i++){
-		if(b->chunks[i].locx == x && b->chunks[i].locy == y){
+		if(getChunk(b, i)->locx == x && getChunk(b, i)->locy == y){
 			return i;
 		}
 	}
 	return -1;
 }
 int moveBoard(struct board *b, int x, int y){
-	return setBoard(b, curChunk(b).locx + x, curChunk(b).locy + y);
+	return setBoard(b, curChunk(b)->locx + x, curChunk(b)->locy + y);
 }
 int setBoard(struct board *b, int x, int y){
 	int pos = getChunkPos(b, x, y);
@@ -127,9 +128,9 @@ int setBoard(struct board *b, int x, int y){
 }
 void drawBoard(struct board *b){
 	if(b->size < b->curChunk) return;//TODO err
-	drawChunk(&curChunk(b));
+	drawChunk(curChunk(b));
 	mvprintw(CHUNKSIZE + 1, 0, "At (%i, %i), Iteration (%i)",
-		curChunk(b).locx, curChunk(b).locy,
+		curChunk(b)->locx, curChunk(b)->locy,
 		b->iterations
 	);
 }

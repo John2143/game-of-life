@@ -38,12 +38,16 @@ void addChunk(struct board *b, int x, int y);
 struct board *createBoard();
 void freeBoard(struct board *board);
 
-//Get the chunk at the specified point. -1 on empty. O(n)
-int getChunkAtPos(struct board *b, int x, int y);
 //Move the board by x, y units right/down. Negative for left/up
+//returns 0 for ok, -1 for failure
 int moveBoard(struct board *b, int x, int y);
 //Move the board to the position of x, y. O(getChunkAtPos())
+//returns 0 for ok, -1 for failure
 int setBoard(struct board *b, int x, int y);
+//Get the chunk at the specified point. -1 on empty. O(n)
+int getChunkPos(struct board *b, int x, int y);
+//Resize the board to the new provided size.
+void resizeBoard(struct board *b, int new);
 //Draws the current chunk as selected by the board. Exits if there is no chunk selected
 //chunk.h: drawChunk does most of the heavy lifting, with drawboard just displaying info
 //TODO: return or handle error
@@ -53,5 +57,11 @@ void drawBoard(struct board *b);
 //Returns the number of chunks removed
 //This method may be referenced as "The GC"
 int collectGarbage(struct board *b);
+
+//DO NOT USE THIS FUNCTION PLEASE, THE VALUE IS NOW STORED IN THE CHUNK STRUCT
+//Returns the chunks position from the end of the board
+//Undefined behavior if c is not of b
+//b and c are pointers
+#define chunkPos(b, c) ((int) (((c) - (b)->chunks) / sizeof(struct chunk)))
 
 #endif

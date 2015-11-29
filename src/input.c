@@ -54,9 +54,9 @@ static int getInput(){
 //TODO allow moving into the void
 static int moveBoardHandler(struct board *b, int x, int y){
 	if(moveBoard(b, x, y) < 0){
-		char buf[GSTRINGSIZE];
-		sprintf(buf, "%i, %i is empty.", curChunk(b)->locx + x, curChunk(b)->locy + y);
-		setgStrings("You cannot move the board in that direction", buf);
+		/*char buf[GSTRINGSIZE];*/
+		/*sprintf(buf, "%i, %i is empty.", curChunk(b)->locx + x, curChunk(b)->locy + y);*/
+		/*setgStrings("You cannot move the board in that direction", buf);*/
 	}
 	return IN_NOOP;
 }
@@ -88,6 +88,7 @@ int input(struct board *b){
 	case IN_RUNGC:
 		sprintf(str1, "GC run on %i chunks...", b->size);
 		int c = collectGarbage(b);
+		/*if(b->size == 0) return IN_DONE;*/
 		sprintf(str2, "Removed %i chunks. New size %i.", c, b->size);
 		setgStrings(str1, str2);
 	break;

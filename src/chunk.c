@@ -1,5 +1,21 @@
 #include "chunk.h"
 
+static int onEdge(struct chunk *c, int i, int delta, int times){
+	while(times--){
+		if(c->board[i]) return 1;
+		i += delta;
+	}
+	return 0;
+}
+
+int newChunks(struct chunk *c){
+	return
+		onEdge(c, at_TR, CHUNKSIZE, CHUNKSIZE) | //Right
+		onEdge(c, at_TL, CHUNKSIZE, CHUNKSIZE) << 1 | //Left
+		onEdge(c, at_BL, 1, CHUNKSIZE) << 2 | //Down
+		onEdge(c, at_TL, 1, CHUNKSIZE) << 3; //Up
+}
+
 static void calculateColorMapFromChange(struct chunk *chunk, bval *change, colormap *map){
 	for(int i = 0; i < CHUNKSIZE2; i++){
 		if(chunk->board[i]){
@@ -21,24 +37,32 @@ static void calculateColorMapFromChange(struct chunk *chunk, bval *change, color
 //Used to display the playing field. 0 is -, 1 is *
 static const char *ASCII = "-*";
 //Used to display the delta field. This is just faster than printf.
-static const char *SURROUND = "012345678";
+static const char *SURROUND = "0123456789";
 
 static void drawBuf(const bval *inbuf, const char *ascii, int offset){
 	attron(COLOR_PAIR(COL_LIVE));
-	for(int y = 0; y < CHUNKSIZE; y++){
-		for(int x = 0; x < CHUNKSIZE; x++){
-			mvaddch(x, y + offset, ascii[inbuf[at(x, y)]]);
+	int x = 0;
+	int y = 0;
+	for(int i = 0; i < CHUNKSIZE2; i++){
+		mvaddch(y, x + offset, ascii[inbuf[i]]);
+		if(++x == CHUNKSIZE){
+			y++;
+			x = 0;
 		}
 	}
 	attroff(COLOR_PAIR(COL_LIVE));
 }
 
 static void drawBufColor(const bval *inbuf, const char *ascii, int offset, const colormap *cols){
-	for(int y = 0; y < CHUNKSIZE; y++){
-		for(int x = 0; x < CHUNKSIZE; x++){
-			attron(COLOR_PAIR(cols[at(x, y)]));
-			mvaddch(x, y + offset, ascii[inbuf[at(x, y)]]);
-			attroff(COLOR_PAIR(cols[at(x, y)]));
+	int x = 0;
+	int y = 0;
+	for(int i = 0; i < CHUNKSIZE2; i++){
+		attron(COLOR_PAIR(cols[i]));
+		mvaddch(y, x + offset, ascii[inbuf[i]]);
+		attroff(COLOR_PAIR(cols[i]));
+		if(++x == CHUNKSIZE){
+			y++;
+			x = 0;
 		}
 	}
 }

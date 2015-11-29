@@ -7,13 +7,6 @@ void setgStrings(const char *a, const char *b){
 	memset(gstr, 0, GSTRINGSIZE * 2);
 	strcpy(gstr, a);
 	strcpy(gstr + GSTRINGSIZE, b);
-
-	int i = GSTRINGSIZE * 2;
-	while(--i){
-		if(gstr[i] == '\0'){
-			gstr[i] = ' ';
-		}
-	}
 }
 
 int main(int argc, char **argv){
@@ -25,10 +18,13 @@ int main(int argc, char **argv){
 	noecho();
 	clear();
 	start_color();
-	init_pair(COL_SPAWN, COLOR_BLUE, COLOR_BLACK);
-	init_pair(COL_DIE, COLOR_YELLOW, COLOR_BLACK);
-	init_pair(COL_DEAD, COLOR_RED, COLOR_BLACK);
-	init_pair(COL_LIVE, COLOR_WHITE, COLOR_BLACK);
+	init_pair(COL_BLUE, COLOR_BLUE, COLOR_BLACK);
+	init_pair(COL_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(COL_RED, COLOR_RED, COLOR_BLACK);
+	init_pair(COL_WHITE, COLOR_WHITE, COLOR_BLACK);
+
+	init_pair(COL_GREEN, COLOR_GREEN, COLOR_BLACK);
+	init_pair(COL_CYAN, COLOR_CYAN, COLOR_BLACK);
 
 	USECOLOR = 1;
 
@@ -39,7 +35,7 @@ int main(int argc, char **argv){
 
 	char *PATTERN = NULL;
 	int getoptval;
-	while((getoptval = getopt (argc, argv, "cp:")) != -1){
+	while((getoptval = getopt(argc, argv, "cp:")) != -1){
 		switch(getoptval)
 		{
 		//Disable color
@@ -67,14 +63,17 @@ int main(int argc, char **argv){
 #undef on
 
 //START TESTS
+	/*goto CLEANUP;*/
 //END TESTS
 
 	while(1){
+		erase();
 		drawBoard(b);
 		mvaddnstr(CHUNKSIZE + 3, 0, gstr, GSTRINGSIZE);
 		mvaddnstr(CHUNKSIZE + 4, 0, gstr + GSTRINGSIZE, GSTRINGSIZE);
 		refresh();
-		if(!input(b)) goto CLEANUP;
+		int in = input(b);
+		if(in == IN_QUIT || in == IN_DONE) goto CLEANUP;
 	}
 
 	CLEANUP:

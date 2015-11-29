@@ -7,6 +7,13 @@
 #define COL_DEAD  3
 #define COL_LIVE  4
 
+#define COL_BLUE   1
+#define COL_YELLOW 2
+#define COL_RED    3
+#define COL_WHITE  4
+#define COL_GREEN  5
+#define COL_CYAN   6
+
 //X Macro for all the directions
 #define EXPAND_DIRS \
 	X(-1, -1) \
@@ -17,6 +24,9 @@
 	X(-1, 1) \
 	X(0, 1) \
 	X(1, 1)
+
+#define min(x, y) (((x) > (y)) ? (y) : (x))
+#define max(x, y) (((x) < (y)) ? (y) : (x))
 
 #ifndef NODEBUG
 #	define DEBUG

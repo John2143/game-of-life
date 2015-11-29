@@ -32,7 +32,7 @@ struct chunk{
 	bval board[CHUNKSIZE2];
 	int locx, locy;
 	struct chunk *neighbors[8];
-	//int boardOffset; //This can be calculated but is just stored here for speed
+	int boardOffset; //This can be calculated but is just stored here for speed
 };
 
 //Calculate an array of bvals that can be used to change the board

@@ -53,11 +53,11 @@ int main(int argc, char **argv){
 #define on(x, y) curChunk(b)->board[at(x, y)] = 1
 	if(PATTERN){
 		if(!strcmp(PATTERN, "glider")){
-			on(0, 0);
 			on(1, 1);
-			on(1, 2);
-			on(2, 1);
-			on(2, 0);
+			on(2, 2);
+			on(3, 2);
+			on(2, 3);
+			on(3, 1);
 		}
 	}
 #undef on

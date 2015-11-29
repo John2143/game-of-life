@@ -61,11 +61,11 @@ int collectGarbage(struct board *b){
 			}
 			struct chunk *firstChunk = getChunk(b, first);
 			memcpy(firstChunk, getChunk(b, last), sizeof(struct chunk));
+			firstChunk->boardOffset = first;
 			for(int i = 0; i < 8; i++){
 				if(firstChunk->neighbors[i]){
 					//make all neighbors have the new pointer
 					firstChunk->neighbors[i]->neighbors[neighborOpposite(i)] = firstChunk;
-					/*firstChunk->boardOffset = first;*/
 				}
 			}
 			first++;
@@ -97,10 +97,24 @@ static int checkNeighborhood(struct chunk *a, struct chunk *b, int x, int y, int
 	return 0;
 }
 
-void resizeBoard(struct board *b, int new){
+int resizeBoard(struct board *b, int new){
 	dprintf("Resizing board from %i to %i\n", b->maxSize, new);
+
 	b->maxSize = new;
+	struct chunk *oldplace = b->chunks; //this is probably super illegal
 	b->chunks = realloc(b->chunks, new * sizeof(struct chunk));
+	if(!b->chunks) return -1;
+	int diff = b->chunks - oldplace;
+	if(diff){
+		for(int i = 0; i < b->size; i++){
+			for(int k = 0; k < 8; k++){
+				if(getChunk(b, i)->neighbors[k]){
+					getChunk(b, i)->neighbors[k] += diff;
+				}
+			}
+		}
+	}
+	return 0;
 }
 
 void addChunk(struct board *b, int x, int y){
@@ -114,7 +128,7 @@ void addChunk(struct board *b, int x, int y){
 	memset(&n->board, 0, CHUNKSIZE2);
 	n->locx = x;
 	n->locy = y;
-	/*n->boardOffset = b->size;*/
+	n->boardOffset = b->size;
 	int i;
 	for(i = 0; i < 8; i++){
 		n->neighbors[i] = NULL;
@@ -131,8 +145,8 @@ void addChunk(struct board *b, int x, int y){
 struct board *createBoard(){
 	struct board *b = malloc(sizeof *b);
 	b->size = 0;
-	b->maxSize = DEFAULTWIDTH;
-	b->chunks = malloc(DEFAULTWIDTH * sizeof(struct chunk));
+	b->chunks = NULL;
+	resizeBoard(b, DEFAULTWIDTH);
 	b->iterations = 0;
 	b->curChunk = -1;
 	return b;
@@ -154,12 +168,15 @@ int getChunkPos(struct board *b, int x, int y){
 
 int moveBoard(struct board *b, int x, int y){
 	if(x == 0 && y == 0) return 0;
-	/*if(x >= -1 && x <= 1 && y >= -1 && y <= 1){*/
-		/*struct chunk *ch = curChunk(b).neighbors[neighborDelta(x, y)];*/
-		/*if(!ch) return -1;*/
-		/*b->curChunk = chunkPos(b, ch);*/
-		/*return 0;*/
-	/*}*/
+	if(
+		(x == -1 || x == 0 || x == 1) &&
+		(y == -1 || y == 0 || y == 1)
+	){
+		struct chunk *ch = curChunk(b)->neighbors[neighborDelta(x, y)];
+		if(!ch) return -1;
+		b->curChunk = ch->boardOffset;
+		return 0;
+	}
 	return setBoard(b, curChunk(b)->locx + x, curChunk(b)->locy + y);
 }
 

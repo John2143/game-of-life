@@ -47,7 +47,8 @@ int setBoard(struct board *b, int x, int y);
 //Get the chunk at the specified point. -1 on empty. O(n)
 int getChunkPos(struct board *b, int x, int y);
 //Resize the board to the new provided size.
-void resizeBoard(struct board *b, int new);
+//Returns -1 if it failed TODO: Exit program on -1
+int resizeBoard(struct board *b, int new);
 //Draws the current chunk as selected by the board. Exits if there is no chunk selected
 //chunk.h: drawChunk does most of the heavy lifting, with drawboard just displaying info
 //TODO: return or handle error

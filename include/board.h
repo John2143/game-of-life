@@ -45,14 +45,14 @@ int moveBoard(struct board *b, int x, int y);
 //returns 0 for ok, -1 for failure
 int setBoard(struct board *b, int x, int y);
 //Get the chunk at the specified point. -1 on empty. O(n)
-int getChunkPos(struct board *b, int x, int y);
+int getChunkPos(const struct board *b, int x, int y);
 //Resize the board to the new provided size.
 //Returns -1 if it failed TODO: Exit program on -1
 int resizeBoard(struct board *b, int new);
 //Draws the current chunk as selected by the board. Exits if there is no chunk selected
 //chunk.h: drawChunk does most of the heavy lifting, with drawboard just displaying info
 //TODO: return or handle error
-void drawBoard(struct board *b);
+void drawBoard(const struct board *b);
 
 //Remove all chunks that are 0, possibly compressing the buffer
 //Returns the number of chunks removed

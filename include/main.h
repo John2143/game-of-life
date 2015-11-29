@@ -14,6 +14,7 @@
 #define GSTRINGSIZE 64
 
 //Set the two string that are displayed below the chunk graph
+//TODO: Should this be const char *restrict?
 void setgStrings(const char *a, const char *b);
 
 int main(int argc, char **argv);

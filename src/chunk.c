@@ -1,6 +1,6 @@
 #include "chunk.h"
 
-static int onEdge(struct chunk *c, int i, int delta, int times){
+static int onEdge(const struct chunk *c, int i, int delta, int times){
 	while(times--){
 		if(c->board[i]) return 1;
 		i += delta;
@@ -8,7 +8,7 @@ static int onEdge(struct chunk *c, int i, int delta, int times){
 	return 0;
 }
 
-int newChunks(struct chunk *c){
+int newChunks(const struct chunk *c){
 	return
 		onEdge(c, at_TR, CHUNKSIZE, CHUNKSIZE) | //Right
 		onEdge(c, at_TL, CHUNKSIZE, CHUNKSIZE) << 1 | //Left
@@ -16,7 +16,7 @@ int newChunks(struct chunk *c){
 		onEdge(c, at_TL, 1, CHUNKSIZE) << 3; //Up
 }
 
-static void calculateColorMapFromChange(struct chunk *chunk, bval *change, colormap *map){
+static void calculateColorMapFromChange(const struct chunk *chunk, bval *change, colormap *map){
 	for(int i = 0; i < CHUNKSIZE2; i++){
 		if(chunk->board[i]){
 			if(change[i] < 2 || change[i] > 3){
@@ -67,7 +67,7 @@ static void drawBufColor(const bval *inbuf, const char *ascii, int offset, const
 	}
 }
 
-void drawChunk(struct chunk *chunk){
+void drawChunk(const struct chunk *chunk){
 	drawBuf(chunk->board, ASCII, 0);
 
 	bval change[CHUNKSIZE2];
@@ -114,7 +114,7 @@ int neighborOpposite(int n){
 }
 
 //Doesnt work if its more than one from the edge
-static bval getv(struct chunk *chunk, int x, int y){
+static bval getv(const struct chunk *chunk, int x, int y){
 	if(!chunk) return 0;
 
 	int dx = 0, dy = 0;
@@ -133,7 +133,7 @@ static bval getv(struct chunk *chunk, int x, int y){
 }
 
 
-void calculateChunk(struct chunk *chunk, bval *change){
+void calculateChunk(const struct chunk *chunk, bval *change){
 	int v, ix, iy;
 	for(ix = 0; ix < CHUNKSIZE; ix++){
 		for(iy = 0; iy < CHUNKSIZE; iy++){
@@ -151,7 +151,7 @@ void calculateChunk(struct chunk *chunk, bval *change){
  *Any live cell with more than three live neighbours dies, as if by over-population.
  *Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
  */
-void applyChange(struct chunk *chunk, bval *change){
+void applyChange(struct chunk *chunk, const bval *change){
 	for(int i = 0; i < CHUNKSIZE2; i++){
 		if(chunk->board[i]){
 			if(change[i] < 2 || change[i] > 3){

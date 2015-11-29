@@ -30,8 +30,7 @@ void iterateBoard(struct board *board){
 int collectGarbage(struct board *b){
 	int marked[b->size];
 	int markednum = 0;
-	int i;
-	for(i = 0; i < b->size; i++){
+	for(int i = 0; i < b->size; i++){
 		struct chunk *c = getChunk(b, i);
 		for(int j = 0; j < CHUNKSIZE2; j++){
 			if(c->board[j]){
@@ -85,18 +84,6 @@ int collectGarbage(struct board *b){
 	return markednum;
 }
 
-static int checkNeighborhood(struct chunk *a, struct chunk *b, int x, int y, int j, int k){
-	//x = b->locx
-	//y = b->locy
-	if ((x + j == a->locx) && (y + k == a->locy)){
-		int del = neighborDelta(j, k);
-		a->neighbors[neighborOpposite(del)] = b;
-		b->neighbors[del] = a;
-		return 1;
-	}
-	return 0;
-}
-
 int resizeBoard(struct board *b, int new){
 	dprintf("Resizing board from %i to %i\n", b->maxSize, new);
 
@@ -113,6 +100,22 @@ int resizeBoard(struct board *b, int new){
 				}
 			}
 		}
+	}
+	return 0;
+}
+
+static int checkNeighborhood(
+	struct chunk *restrict a,
+	struct chunk *restrict b,
+	int x, int y, int j, int k
+){
+	//x = b->locx
+	//y = b->locy
+	if ((x + j == a->locx) && (y + k == a->locy)){
+		int del = neighborDelta(j, k);
+		a->neighbors[neighborOpposite(del)] = b;
+		b->neighbors[del] = a;
+		return 1;
 	}
 	return 0;
 }
@@ -157,7 +160,7 @@ void freeBoard(struct board *board){
 	free(board);
 }
 
-int getChunkPos(struct board *b, int x, int y){
+int getChunkPos(const struct board *b, int x, int y){
 	for(int i = 0; i < b->size; i++){
 		if(getChunk(b, i)->locx == x && getChunk(b, i)->locy == y){
 			return i;
@@ -168,10 +171,7 @@ int getChunkPos(struct board *b, int x, int y){
 
 int moveBoard(struct board *b, int x, int y){
 	if(x == 0 && y == 0) return 0;
-	if(
-		(x == -1 || x == 0 || x == 1) &&
-		(y == -1 || y == 0 || y == 1)
-	){
+	if((x == -1 || x == 0 || x == 1) && (y == -1 || y == 0 || y == 1)){
 		struct chunk *ch = curChunk(b)->neighbors[neighborDelta(x, y)];
 		if(!ch) return -1;
 		b->curChunk = ch->boardOffset;
@@ -187,14 +187,14 @@ int setBoard(struct board *b, int x, int y){
 	return 0;
 }
 
-static void drawCross(struct chunk *ch, int dir, int x, int y, char c){
+static void drawCross(const struct chunk *ch, int dir, int x, int y, char c){
 	int col = ch->neighbors[dir] ? COL_GREEN : COL_YELLOW;
 	attron(COLOR_PAIR(col));
 	mvaddch(CHUNKSIZE + y, x, c);
 	attroff(COLOR_PAIR(col));
 }
 
-void drawBoard(struct board *b){
+void drawBoard(const struct board *b){
 	if(b->curChunk > b->size){
 		mvaddstr(1, 1, "Internal error.");
 	}else if(b->size == 0){

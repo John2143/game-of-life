@@ -36,12 +36,12 @@ struct chunk{
 };
 
 //Calculate an array of bvals that can be used to change the board
-void calculateChunk(struct chunk *chunk, bval *change);
+void calculateChunk(const struct chunk *chunk, bval *change);
 //Use the change array to mutate the chunk using the rules
-void applyChange(struct chunk *chunk, bval *change);
+void applyChange(struct chunk *chunk, const bval *change);
 //Draw the current chunk with its changemap
 //Running the program with -c will disasble colors
-void drawChunk(struct chunk *chunk);
+void drawChunk(const struct chunk *chunk);
 
 //Returns the chunks that will need to be created by the next move
 //helper function for generateNewChunks
@@ -49,7 +49,7 @@ void drawChunk(struct chunk *chunk);
 //0bXXXX
 // U^  ^R
 //  D^^L
-int newChunks(struct chunk *c);
+int newChunks(const struct chunk *c);
 
 //returns one of the values from the NE enum based on x and y
 int neighborDelta(int x, int y);

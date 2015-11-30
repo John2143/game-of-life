@@ -48,6 +48,8 @@ int collectGarbage(struct board *b){
 		}
 		NEXT:;
 	}
+	if(marked[b->curChunk]) b->curChunk = -1;
+
 	if(markednum < b->size){
 		int first = 0;
 		int last = b->size;
@@ -86,7 +88,6 @@ int collectGarbage(struct board *b){
 
 int resizeBoard(struct board *b, int new){
 	dprintf("Resizing board from %i to %i\n", b->maxSize, new);
-
 	b->maxSize = new;
 	struct chunk *oldplace = b->chunks; //this is probably super illegal
 	b->chunks = realloc(b->chunks, new * sizeof(struct chunk));
@@ -123,7 +124,6 @@ static int checkNeighborhood(
 void addChunk(struct board *b, int x, int y){
 	if(getChunkPos(b, x, y) >= 0) return; //exists
 	if(b->size >= b->maxSize){
-	addChunk(b, 1, 0);
 		resizeBoard(b, b->maxSize << 1);
 	}
 
@@ -188,10 +188,38 @@ int setBoard(struct board *b, int x, int y){
 }
 
 static void drawCross(const struct chunk *ch, int dir, int x, int y, char c){
-	int col = ch->neighbors[dir] ? COL_GREEN : COL_YELLOW;
-	attron(COLOR_PAIR(col));
-	mvaddch(CHUNKSIZE + y, x, c);
-	attroff(COLOR_PAIR(col));
+	int hasneighbor = dir == NE_HERE ? 1 : ch->neighbors[dir] != NULL;
+	if(USECOLOR){
+		int col = hasneighbor ? COL_GREEN : COL_YELLOW;
+		attron(COLOR_PAIR(col));
+		mvaddch(CHUNKSIZE + y, x, c);
+		attroff(COLOR_PAIR(col));
+	}else{
+		mvaddch(CHUNKSIZE + y, x, hasneighbor ? c : ' ');
+	}
+}
+
+static void drawChunkData(const struct chunk *c){
+	drawCross(c, NE_L,  0, 1, '-');
+	drawCross(c, NE_R,  2, 1, '-');
+	drawCross(c, NE_U,  1, 0, '|');
+	drawCross(c, NE_D,  1, 2, '|');
+	drawCross(c, NE_UR, 2, 0, '/');
+	drawCross(c, NE_DR, 2, 2, '\\');
+	drawCross(c, NE_UL, 0, 0, '\\');
+	drawCross(c, NE_DL, 0, 2, '/');
+	drawCross(c, NE_HERE, 1, 1, '*');
+	mvprintw(CHUNKSIZE, 4, "At (%2i, %2i)",
+		c->locx, c->locy
+	);
+}
+
+static void drawBoardData(const struct board *b){
+	mvprintw(CHUNKSIZE + 1, 4, "Iteration %i Index %i Size %i",
+		b->iterations,
+		b->curChunk,
+		b->size
+	);
 }
 
 void drawBoard(const struct board *b){
@@ -199,24 +227,14 @@ void drawBoard(const struct board *b){
 		mvaddstr(1, 1, "Internal error.");
 	}else if(b->size == 0){
 		mvaddstr(1, 1, "This board is empty.");
+		drawBoardData(b);
 	}else if(b->curChunk == -1){
 		mvaddstr(1, 1, "There is no currently selected chunk.");
+		drawBoardData(b);
 	}else{
 		struct chunk *c = curChunk(b);
 		drawChunk(c);
-		mvprintw(CHUNKSIZE + 1, 4, "At (%2i, %2i), Iteration %i Index %i Size %i",
-			c->locx, c->locy,
-			b->iterations,
-			b->curChunk,
-			b->size
-		);
-		drawCross(c, NE_L,  0, 1, '-');
-		drawCross(c, NE_R,  2, 1, '-');
-		drawCross(c, NE_U,  1, 0, '|');
-		drawCross(c, NE_D,  1, 2, '|');
-		drawCross(c, NE_UR, 2, 0, '/');
-		drawCross(c, NE_DR, 2, 2, '\\');
-		drawCross(c, NE_UL, 0, 0, '\\');
-		drawCross(c, NE_DL, 0, 2, '/');
+		drawChunkData(c);
+		drawBoardData(b);
 	}
 }

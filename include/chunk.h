@@ -51,10 +51,16 @@ void drawChunk(const struct chunk *chunk);
 //  D^^L
 int newChunks(const struct chunk *c);
 
+static const int neighborOppositeValues[] = {
+	NE_L, NE_R, NE_D, NE_U,
+	NE_DL, NE_UL, NE_DR, NE_UR,
+	NE_HERE, NE_NONE
+};
+
 //returns one of the values from the NE enum based on x and y
 int neighborDelta(int x, int y);
 //returns the opposite of the enum given
-int neighborOpposite(int n);
+#define neighborOpposite(i) (neighborOppositeValues[i])
 //reverse of neighborDelta
 #define rneighborDelta(x, y) neighborDelta(-(x), -(y))
 //#define rneighborDelta(x, y) neighborOpposite(neighborDelta(x, y))

@@ -40,4 +40,5 @@ typedef unsigned char bval;
 typedef unsigned int colormap;
 
 char USECOLOR;
+
 #endif

@@ -83,51 +83,40 @@ void drawChunk(const struct chunk *chunk){
 }
 
 int neighborDelta(int x, int y){
-	if(x == 0){
-		if(y == 0) return NE_HERE;
-		else if(y == 1) return NE_D;
-		else return NE_U;
-	}else if(x == 1){
-		if(y == 0) return NE_R;
-		else if(y == 1) return NE_DR;
-		else return NE_UR;
-	}else{
-		if(y == 0) return NE_L;
-		else if(y == 1) return NE_DL;
-		else return NE_UL;
+	switch(x){
+	case 0:
+		switch(y){
+		case  0: return NE_HERE;
+		case  1: return NE_D;
+		case -1: return NE_U;
+		}
+	case 1:
+		switch(y){
+		case  0: return NE_R;
+		case  1: return NE_DR;
+		case -1: return NE_UR;
+		}
+	default:
+		switch(y){
+		case  0: return NE_L;
+		case  1: return NE_DL;
+		case -1: return NE_UL;
+		}
 	}
-}
-
-int neighborOpposite(int n){
-	switch(n){
-	case NE_R: return NE_L;
-	case NE_L: return NE_R;
-	case NE_U: return NE_D;
-	case NE_D: return NE_U;
-	case NE_UR: return NE_DL;
-	case NE_DR: return NE_UL;
-	case NE_UL: return NE_DR;
-	case NE_DL: return NE_UR;
-	case NE_HERE: return NE_HERE;
-	default: return NE_NONE;
-	}
+	return NE_NONE;
 }
 
 //Doesnt work if its more than one from the edge
 static bval getv(const struct chunk *chunk, int x, int y){
 	if(!chunk) return 0;
-
 	int dx = 0, dy = 0;
-	if(x < 0){x = x + CHUNKSIZE; dx = -1;}
-	else if(x >= CHUNKSIZE){x = x - CHUNKSIZE; dx = 1;}
-
-	if(y < 0){y = y + CHUNKSIZE; dy = -1;}
-	else if(y >= CHUNKSIZE){y = y - CHUNKSIZE; dy = 1;}
-
+	if(x == -1){x = CHUNKSIZE - 1; dx--;}
+	else if(x == CHUNKSIZE){x = 0; dx++;}
+	if(y == -1){y = CHUNKSIZE - 1; dy--;}
+	else if(y == CHUNKSIZE){y = 0; dy++;}
 	int d = neighborDelta(dx, dy);
 	switch(d){
 		case NE_HERE: return chunk->board[at(x, y)];
-		case NE_NONE: return 0;//TODO error here
 		default: return getv(chunk->neighbors[d], x, y);
 	}
 }

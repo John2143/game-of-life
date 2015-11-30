@@ -45,6 +45,8 @@ static int getInput(){
 		return IN_RET(IN_ITERATE, 1000);
 	case 'g':
 		return IN_RUNGC;
+	case 'f':
+		return IN_ZEROCHUNK;
 	default:
 		setgStrings("Invalid move.", "");
 		return IN_NOOP;
@@ -91,6 +93,9 @@ int input(struct board *b){
 		/*if(b->size == 0) return IN_DONE;*/
 		sprintf(str2, "Removed %i chunks. New size %i.", c, b->size);
 		setgStrings(str1, str2);
+	break;
+	case IN_ZEROCHUNK:
+		b->curChunk = 0;
 	break;
 	case IN_NOOP:
 	break;

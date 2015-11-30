@@ -15,6 +15,7 @@ int generateNewChunks(struct board *b){
 }
 
 void iterateBoard(struct board *board){
+	if(!board->untilAutoGC--) collectGarbage(board);
 	generateNewChunks(board);
 	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
 	for(int i = 0; i < board->size; i++){
@@ -28,6 +29,7 @@ void iterateBoard(struct board *board){
 }
 
 int collectGarbage(struct board *b){
+	b->untilAutoGC = GCRUNFREQ;
 	int marked[b->size];
 	int markednum = 0;
 	for(int i = 0; i < b->size; i++){
@@ -152,6 +154,7 @@ struct board *createBoard(){
 	resizeBoard(b, DEFAULTWIDTH);
 	b->iterations = 0;
 	b->curChunk = -1;
+	b->untilAutoGC = GCRUNFREQ;
 	return b;
 }
 
@@ -215,10 +218,11 @@ static void drawChunkData(const struct chunk *c){
 }
 
 static void drawBoardData(const struct board *b){
-	mvprintw(CHUNKSIZE + 1, 4, "Iteration %i Index %i Size %i",
+	mvprintw(CHUNKSIZE + 1, 4, "Iteration %i Index %i Size %i NextGC %i",
 		b->iterations,
 		b->curChunk,
-		b->size
+		b->size,
+		b->untilAutoGC
 	);
 }
 

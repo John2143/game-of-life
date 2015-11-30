@@ -22,6 +22,7 @@
 #define IN_MOVE_UP    6
 #define IN_RUNGC      7
 #define IN_DONE       8
+#define IN_ZEROCHUNK  9
 
 int input(struct board *b);
 

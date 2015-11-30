@@ -40,5 +40,6 @@ typedef unsigned char bval;
 typedef unsigned int colormap;
 
 char USECOLOR;
+int GCRUNFREQ;
 
 #endif

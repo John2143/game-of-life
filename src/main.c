@@ -27,6 +27,7 @@ int main(int argc, char **argv){
 	init_pair(COL_CYAN, COLOR_CYAN, COLOR_BLACK);
 
 	USECOLOR = 1;
+	GCRUNFREQ = 50;
 
 	setgStrings(
 		"Welcome to the game of life! Press space/zxc to begin!",
@@ -35,7 +36,7 @@ int main(int argc, char **argv){
 
 	char *PATTERN = NULL;
 	int getoptval;
-	while((getoptval = getopt(argc, argv, "cp:")) != -1){
+	while((getoptval = getopt(argc, argv, "cg:p:")) != -1){
 		switch(getoptval)
 		{
 		//Disable color
@@ -44,6 +45,9 @@ int main(int argc, char **argv){
 		break;
 		case 'p':
 			PATTERN = optarg;
+		break;
+		case 'g':
+			GCRUNFREQ = atoi(optarg);
 		break;
 		}
 	}

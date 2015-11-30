@@ -14,6 +14,7 @@ struct board{
 	int maxSize;
 	int curChunk;
 	int iterations;
+	int untilAutoGC;
 };
 
 //Return a pointer to the index-th chunk

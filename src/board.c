@@ -16,7 +16,7 @@ int generateNewChunks(struct board *b){
 
 void iterateBoard(struct board *board){
 	generateNewChunks(board);
-	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
+	bval (*change)[CHUNKSIZE2] = calloc(board->size * CHUNKSIZE2, sizeof(bval));
 	for(int i = 0; i < board->size; i++){
 		calculateChunk(getChunk(board, i), change[i]);
 	}

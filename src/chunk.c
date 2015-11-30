@@ -114,17 +114,60 @@ int neighborOpposite(int n){
 }
 
 //Doesnt work if its more than one from the edge
+/*static bval getv(const struct chunk *chunk, int x, int y){*/
+	/*if(!chunk) return 0;*/
+
+	/*int dx = 0, dy = 0;*/
+	/*if(x < 0){x = x + CHUNKSIZE; dx = -1;}*/
+	/*else if(x >= CHUNKSIZE){x = x - CHUNKSIZE; dx = 1;}*/
+
+	/*if(y < 0){y = y + CHUNKSIZE; dy = -1;}*/
+	/*else if(y >= CHUNKSIZE){y = y - CHUNKSIZE; dy = 1;}*/
+
+	/*int d = neighborDelta(dx, dy);*/
+	/*switch(d){*/
+		/*case NE_HERE: return chunk->board[at(x, y)];*/
+		/*case NE_NONE: return 0;//TODO error here*/
+		/*default: return getv(chunk->neighbors[d], x, y);*/
+	/*}*/
+/*}*/
+
+/*void calculateChunk(const struct chunk *chunk, bval *change){*/
+	/*int v, ix, iy;*/
+	/*for(ix = 0; ix < CHUNKSIZE; ix++){*/
+		/*for(iy = 0; iy < CHUNKSIZE; iy++){*/
+			/*v = 0;*/
+			/*#define X(j, k) if(getv(chunk, ix + j, iy + k)) v++;*/
+			/*EXPAND_DIRS*/
+			/*#undef X*/
+			/*change[at(ix, iy)] = v;*/
+		/*}*/
+	/*}*/
+/*}*/
+
+#define CHUNKSIZE_MASK (CHUNKSIZE - 1)
+#define isOnBorderLeft(i) (!(i & CHUNKSIZE_MASK))
+#define isOnBorderRight(i) (isOnBorderRight(i + 1))
+#define isOnBorderTop(i) (!(i & ~CHUNKSIZE_MASK))
+#define isOnBorderBottom(i) (i - CHUNKSIZE2 < 0)
+
+static int isOnBorder(int i){
+	return
+		isOnBorderRight(i) ||
+		isOnBorderLeft(i) ||
+		isOnBorderTop(i) ||
+		isOnBorderBottom(i);
+}
+
 static bval getv(const struct chunk *chunk, int x, int y){
 	if(!chunk) return 0;
 
 	int dx = 0, dy = 0;
-	if(x < 0){x = x + CHUNKSIZE; dx = -1;}
-	else if(x >= CHUNKSIZE){x = x - CHUNKSIZE; dx = 1;}
+	if(x == -1) return 0;
+	if(x == CHUNKSIZE) return 0;
+	if(y == -1) return 0;
+	if(y == CHUNKSIZE) return 0;
 
-	if(y < 0){y = y + CHUNKSIZE; dy = -1;}
-	else if(y >= CHUNKSIZE){y = y - CHUNKSIZE; dy = 1;}
-
-	int d = neighborDelta(dx, dy);
 	switch(d){
 		case NE_HERE: return chunk->board[at(x, y)];
 		case NE_NONE: return 0;//TODO error here
@@ -132,16 +175,60 @@ static bval getv(const struct chunk *chunk, int x, int y){
 	}
 }
 
+static int edgeDelta(
+	const struct chunk *c, bval *change,
+	int boardi, int changei, int delta
+){
+	int times = CHUNKSIZE;
+	while(times--){
+		if(c->board[boardi]){
+			//MAKE SURE TO NOT GO OUT OF BOUNDS HERE
+		}
+		boardi += delta;
+		changei += delta;
+	}
+	return 0;
+}
 
-void calculateChunk(const struct chunk *chunk, bval *change){
-	int v, ix, iy;
-	for(ix = 0; ix < CHUNKSIZE; ix++){
-		for(iy = 0; iy < CHUNKSIZE; iy++){
-			v = 0;
-			#define X(j, k) if(getv(chunk, ix + j, iy + k)) v++;
-			EXPAND_DIRS
-			#undef X
-			change[at(ix, iy)] = v;
+void calculateChunk(const struct chunk *ch, bval *change){
+	
+	//TODO STUFF HERE
+
+	edgeDelta( //top edge
+		ch->neighbors[NE_U], change,
+		at_BL, at_TL, 1
+	);
+	edgeDelta( //bottom edge
+		ch->neighbors[NE_D], change,
+		at_TL, at_BL, 1
+	);
+	edgeDelta( //left edge
+		ch->neighbors[NE_L], change,
+		at_TR, at_TL, CHUNKSIZE
+	);
+	edgeDelta( //right edge
+		ch->neighbors[NE_R], change,
+		at_TL, at_TR, CHUNKSIZE
+	);
+
+	if(ch->neighbors[NE_UL]){
+		if(ch->neighbors[NE_UL]->board[at_BR]){
+			change[at_TL]++;
+		}
+	}
+	if(ch->neighbors[NE_UR]){
+		if(ch->neighbors[NE_UR]->board[at_BL]){
+			change[at_TR]++;
+		}
+	}
+	if(ch->neighbors[NE_BL]){
+		if(ch->neighbors[NE_BL]->board[at_TR]){
+			change[at_BL]++;
+		}
+	}
+	if(ch->neighbors[NE_BR]){
+		if(ch->neighbors[NE_BR]->board[at_TL]){
+			change[at_BR]++;
 		}
 	}
 }

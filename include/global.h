@@ -24,6 +24,15 @@
 	X(-1, 1) \
 	X(0, 1) \
 	X(1, 1)
+#define EXPAND_DIRSI \
+	X(-(CHUNKSIZE + 1)) \
+	X(-CHUNKSIZE) \
+	X(-CHUNKSIZE + 1) \
+	X(-1) \
+	X(1) \
+	X(CHUNKSIZE - 1) \
+	X(CHUNKSIZE) \
+	X(CHUNKSIZE + 1)
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
 #define max(x, y) (((x) < (y)) ? (y) : (x))

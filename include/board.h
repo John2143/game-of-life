@@ -15,6 +15,7 @@ struct board{
 	int curChunk;
 	int iterations;
 	int untilAutoGC;
+	char name[32];
 };
 
 //Return a pointer to the index-th chunk
@@ -36,8 +37,13 @@ int generateNewChunks(struct board *b);
 //Adds a new chunk to the board, possibly doubling the stack size if it needs room
 void addChunk(struct board *b, int x, int y);
 //Creates a new empty board. Must call freeBoard() to release the pointer.
-struct board *createBoard();
+struct board *createBoard(const char *name);
+//Creates the empty board data
+//You must use this method if you do not load the board data from io.
+void initializeBoard(struct board *board);
 void freeBoard(struct board *board);
+//Set the name of a board
+void setBoardName(struct board *b, const char *name);
 
 //Move the board by x, y units right/down. Negative for left/up
 //returns 0 for ok, -1 for failure
@@ -50,6 +56,8 @@ int getChunkPos(const struct board *b, int x, int y);
 //Resize the board to the new provided size.
 //Returns -1 if it failed TODO: Exit program on -1
 int resizeBoard(struct board *b, int new);
+//Same as resizeBoard, but will round up to the next power of two
+int resizeBoardMin(struct board *b, int min);
 //Draws the current chunk as selected by the board. Exits if there is no chunk selected
 //chunk.h: drawChunk does most of the heavy lifting, with drawboard just displaying info
 //TODO: return or handle error

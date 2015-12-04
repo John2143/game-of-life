@@ -79,13 +79,17 @@ int collectGarbage(struct board *b){
 		b->size = 0;
 	}
 
-	int newmax = DEFAULTWIDTH;
-	while(newmax < b->size){
-		newmax <<= 1;
-	}
-	resizeBoard(b, newmax);
+	resizeBoardMin(b, b->size);
 
 	return markednum;
+}
+
+int resizeBoardMin(struct board *b, int new){
+	int newmax = DEFAULTWIDTH;
+	while(newmax < new){
+		newmax <<= 1;
+	}
+	return resizeBoard(b, newmax);
 }
 
 int resizeBoard(struct board *b, int new){
@@ -147,15 +151,23 @@ void addChunk(struct board *b, int x, int y){
 	b->size++;
 }
 
-struct board *createBoard(){
+void setBoardName(struct board *b, const char *name){
+	strcpy(b->name, name);
+}
+
+struct board *createBoard(const char *name){
 	struct board *b = malloc(sizeof *b);
-	b->size = 0;
 	b->chunks = NULL;
-	resizeBoard(b, DEFAULTWIDTH);
+	b->untilAutoGC = GCRUNFREQ;
+	if(name) setBoardName(b, name); else setBoardName(b, "empty");
+	return b;
+}
+
+void initializeBoard(struct board *b){
+	b->size = 0;
+	resizeBoardMin(b, 0);
 	b->iterations = 0;
 	b->curChunk = -1;
-	b->untilAutoGC = GCRUNFREQ;
-	return b;
 }
 
 void freeBoard(struct board *board){
@@ -223,6 +235,9 @@ static void drawBoardData(const struct board *b){
 		b->curChunk,
 		b->size,
 		b->untilAutoGC
+	);
+	mvprintw(CHUNKSIZE + 2, 4, "Board '%s'",
+		b->name
 	);
 }
 

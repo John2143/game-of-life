@@ -26,6 +26,11 @@ int main(int argc, char **argv){
 	init_pair(COL_GREEN, COLOR_GREEN, COLOR_BLACK);
 	init_pair(COL_CYAN, COLOR_CYAN, COLOR_BLACK);
 
+	WINDOWMAX_Y = getmaxy(stdscr);
+	WINDOWMAX_X = getmaxx(stdscr);
+
+	dprintf("Window size is %ix%i\n", WINDOWMAX_X, WINDOWMAX_Y);
+
 	USECOLOR = 1;
 	GCRUNFREQ = 50;
 
@@ -35,8 +40,9 @@ int main(int argc, char **argv){
 	);
 
 	char *PATTERN = NULL;
+	char *BOARDNAME = NULL;
 	int getoptval;
-	while((getoptval = getopt(argc, argv, "cg:p:")) != -1){
+	while((getoptval = getopt(argc, argv, "cg:p:n:")) != -1){
 		switch(getoptval)
 		{
 		//Disable color
@@ -46,27 +52,35 @@ int main(int argc, char **argv){
 		case 'p':
 			PATTERN = optarg;
 		break;
+		case 'n':
+			BOARDNAME = optarg;
+		break;
 		case 'g':
 			GCRUNFREQ = atoi(optarg);
 		break;
 		}
 	}
-	struct board *b = createBoard();
-	addChunk(b, 0, 0);
-	setBoard(b, 0, 0);
-#define on(x, y) curChunk(b)->board[at(x, y)] = 1
+
+	struct board *b;
 	if(PATTERN){
-		if(!strcmp(PATTERN, "glider")){
-			on(1, 1);
-			on(2, 2);
-			on(3, 2);
-			on(2, 3);
-			on(3, 1);
+		b = readNewBoard(PATTERN);
+		if(BOARDNAME){
+			setBoardName(b, BOARDNAME);
 		}
+	}else{
+		b = createBoard(BOARDNAME);
+		initializeBoard(b);
+		addChunk(b, 0, 0);
+		setBoard(b, 0, 0);
 	}
-#undef on
 
 //START TESTS
+/*#define on(x, y) curChunk(b)->board[at(x, y)] = 1*/
+	/*on(1, 1);*/
+	/*on(2, 2);*/
+	/*on(3, 2);*/
+	/*on(2, 3);*/
+	/*on(3, 1);*/
 	/*goto CLEANUP;*/
 //END TESTS
 

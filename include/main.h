@@ -7,6 +7,7 @@
 #include "global.h"
 #include "input.h"
 #include "board.h"
+#include "io.h"
 
 //Must be initiated here
 

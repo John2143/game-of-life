@@ -23,6 +23,9 @@
 #define IN_RUNGC      7
 #define IN_DONE       8
 #define IN_ZEROCHUNK  9
+#define IN_READ       10
+#define IN_WRITE      11
+#define IN_RENAME     12
 
 int input(struct board *b);
 

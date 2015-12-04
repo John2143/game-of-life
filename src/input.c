@@ -47,6 +47,12 @@ static int getInput(){
 		return IN_RUNGC;
 	case 'f':
 		return IN_ZEROCHUNK;
+	case 'j':
+		return IN_READ;
+	case 'k':
+		return IN_WRITE;
+	case 'l':
+		return IN_RENAME;
 	default:
 		setgStrings("Invalid move.", "");
 		return IN_NOOP;
@@ -96,6 +102,17 @@ int input(struct board *b){
 	break;
 	case IN_ZEROCHUNK:
 		b->curChunk = 0;
+	break;
+	case IN_READ:
+		readBoard(b);
+		setgStrings("Read from file", "");
+	break;
+	case IN_WRITE:
+		writeBoard(b);
+		setgStrings("Written to file", "");
+	break;
+	case IN_RENAME:
+		//TODO
 	break;
 	case IN_NOOP:
 	break;

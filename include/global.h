@@ -42,4 +42,7 @@ typedef unsigned int colormap;
 char USECOLOR;
 int GCRUNFREQ;
 
+int WINDOWMAX_X;
+int WINDOWMAX_Y;
+
 #endif

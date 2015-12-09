@@ -29,6 +29,7 @@
 #define max(x, y) (((x) < (y)) ? (y) : (x))
 
 #ifndef NODEBUG
+#	include <stdio.h>
 #	define DEBUG
 	FILE *DEBUG_FILE;
 #	define dprintf(...) fprintf(DEBUG_FILE, __VA_ARGS__);

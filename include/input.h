@@ -35,5 +35,6 @@ enum INM INPUTMODE;
 const char *getInputModeName(void);
 int input(struct board *b);
 void inputRenderer(void);
+void setInputMode(enum INM mode);
 
 #endif

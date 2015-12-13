@@ -85,8 +85,6 @@ int main(int argc, char **argv){
 	}else{
 		b = createBoard(BOARDNAME);
 		initializeBoard(b);
-		addChunk(b, 0, 0, NULL);
-		setBoard(b, 0, 0);
 	}
 
 //START TESTS

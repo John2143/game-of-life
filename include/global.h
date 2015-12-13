@@ -2,10 +2,10 @@
 #define global_H
 
 //Used in chunk.hcalculateColorMapFromChange
-#define COL_SPAWN 1
-#define COL_DIE   2
-#define COL_DEAD  3
-#define COL_LIVE  4
+#define COL_SPAWN COL_CYAN
+#define COL_DIE   COL_YELLOW
+#define COL_DEAD  COL_RED
+#define COL_LIVE  COL_WHITE
 
 #define COL_BLUE   1
 #define COL_YELLOW 2
@@ -24,6 +24,8 @@
 	X(-1, 1) \
 	X(0, 1) \
 	X(1, 1)
+
+#define COORDINATES "(%2i, %2i)"
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
 #define max(x, y) (((x) < (y)) ? (y) : (x))

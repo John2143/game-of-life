@@ -16,6 +16,14 @@ int newChunks(const struct chunk *c){
 		onEdge(c, at_TL, 1, CHUNKSIZE) << 3; //Up
 }
 
+int chunkEmpty(const struct chunk *chunk){
+	int i = CHUNKSIZE2;
+	while(i--){
+		if(chunk->board[i]) return 0;
+	}
+	return 1;
+}
+
 static void calculateColorMapFromChange(const struct chunk *chunk, bval *change, colormap *map){
 	for(int i = 0; i < CHUNKSIZE2; i++){
 		if(chunk->board[i]){
@@ -35,7 +43,7 @@ static void calculateColorMapFromChange(const struct chunk *chunk, bval *change,
 }
 
 //Used to display the playing field. 0 is -, 1 is *
-static const char *ASCII = "-*";
+static const char *ASCII = ".*";
 //Used to display the delta field. This is just faster than printf.
 static const char *SURROUND = "0123456789";
 
@@ -68,8 +76,6 @@ static void drawBufColor(const bval *inbuf, const char *ascii, int offset, const
 }
 
 void drawChunk(const struct chunk *chunk){
-	drawBuf(chunk->board, ASCII, 0);
-
 	bval change[CHUNKSIZE2];
 	calculateChunk(chunk, change);
 
@@ -77,8 +83,10 @@ void drawChunk(const struct chunk *chunk){
 		colormap colchange[CHUNKSIZE2];
 		calculateColorMapFromChange(chunk, change, colchange);
 		drawBufColor(change, SURROUND, CHUNKSIZE + 1, colchange);
+		drawBufColor(chunk->board, ASCII, 0, colchange);
 	}else{
 		drawBuf(change, SURROUND, CHUNKSIZE + 1);
+		drawBuf(chunk->board, ASCII, 0);
 	}
 }
 

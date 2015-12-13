@@ -7,6 +7,7 @@
 #include "chunk.h"
 
 #define DEFAULTWIDTH 8
+#define BOARDNAMELENGTH 64
 
 struct board{
 	struct chunk *chunks;
@@ -15,7 +16,7 @@ struct board{
 	int curChunk;
 	int iterations;
 	int untilAutoGC;
-	char name[32];
+	char name[BOARDNAMELENGTH];
 };
 
 //Return a pointer to the index-th chunk
@@ -67,7 +68,7 @@ void drawBoard(const struct board *b);
 //Remove all chunks that are 0, possibly compressing the buffer
 //Returns the number of chunks removed
 //This method may be referenced as "The GC"
-int collectGarbage(struct board *b);
+void collectGarbage(struct board *b);
 
 //DO NOT USE THIS FUNCTION PLEASE, THE VALUE IS NOW STORED IN THE CHUNK STRUCT
 //Returns the chunks position from the end of the board

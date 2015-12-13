@@ -42,6 +42,9 @@ void applyChange(struct chunk *chunk, const bval *change);
 //Draw the current chunk with its changemap
 //Running the program with -c will disasble colors
 void drawChunk(const struct chunk *chunk);
+//returns 0 if it is not empty
+//returns 1 if it is empty
+int chunkEmpty(const struct chunk *chunk);
 
 //Returns the chunks that will need to be created by the next move
 //helper function for generateNewChunks

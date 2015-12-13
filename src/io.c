@@ -57,8 +57,10 @@ static void unpackChunk(struct chunk *c, const char *mem){
 	/*}*/
 }
 
+#define MEMSIZE max(PACKEDCHUNKSIZE, BOARDNAMELENGTH + 15)
+static char mem[MEMSIZE];
+
 int writeBoard(const struct board *b){
-	char mem[PACKEDCHUNKSIZE];
 	sprintf(mem, "boards/%s.golb", b->name);
 	FILE *f = fopen(mem, "wb");
 	if(!f) return -1;
@@ -81,14 +83,13 @@ int writeBoard(const struct board *b){
 }
 
 int readBoard(struct board *b){
-	char mem[PACKEDCHUNKSIZE];
 	sprintf(mem, "boards/%s.golb", b->name);
 	FILE *f = fopen(mem, "rb");
 	if(!f) return -1;
 
 	fread(mem, 1, 0x20, f);
 	/*int mapver = unpack32u(mem + 0x0);*/
-	b->size       = unpack32u(mem + 0x4);
+	int newsize   = unpack32u(mem + 0x4);
 	b->iterations = unpack32u(mem + 0x8);
 	b->curChunk   = unpack32i(mem + 0xb);
 	dprintf("Size %i, Iterations %i, curChunk %i\n",
@@ -98,12 +99,14 @@ int readBoard(struct board *b){
 	/*fread(mem, 1, 0x20, f);*/
 	/*setBoardName(b, mem);*/
 
-	resizeBoardMin(b, b->size);
+	resizeBoardMin(b, newsize);
+	b->size = 0;
+
 	dprintf("MaxSize %i\n", b->maxSize);
 	fflush(DEBUG_FILE);
 
 	struct chunk shellChunk;
-	for(int i = 0; i < b->size; i++){
+	for(int i = 0; i < newsize; i++){
 		fread(mem, 1, PACKEDCHUNKSIZE, f);
 		unpackChunk(&shellChunk, mem);
 		dprintf("%i, %i\n", shellChunk.locx, shellChunk.locy);

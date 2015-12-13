@@ -7,7 +7,10 @@ EXECUTABLE=gol
 LIBRARIES=-lpdcurses
 
 all:
-	$(CC) $(CFLAGS) $(SOURCES) $(LIBRARIES) -o $(EXECUTABLE)
+	$(CC) $(CFLAGS) -g $(SOURCES) $(LIBRARIES) -o $(EXECUTABLE)
+
+fast:
+	$(CC) $(CFLAGS) -Ofast $(SOURCES) $(LIBRARIES) -o $(EXECUTABLE)
 
 clean:
 	rm *o

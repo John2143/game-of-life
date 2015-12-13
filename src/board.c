@@ -34,65 +34,81 @@ void iterateBoardTimes(struct board *board, int times){
 	}
 }
 
-int collectGarbage(struct board *b){
-	b->untilAutoGC = GCRUNFREQ;
-	int marked[b->size];
-	int markednum = 0;
-	for(int i = 0; i < b->size; i++){
-		struct chunk *c = getChunk(b, i);
-		for(int j = 0; j < CHUNKSIZE2; j++){
-			if(c->board[j]){
-				marked[i] = 0;
-				goto NEXT;
-			}
-		}
-		markednum++;
-		marked[i] = 1;
-		//This chunk will be deleted so remove its links
-		for(int j = 0; j < 8; j++){
-			if(c->neighbors[j]){
-				c->neighbors[j]->neighbors[neighborOpposite(j)] = NULL;
-			}
-		}
-		NEXT:;
-	}
-	if(marked[b->curChunk]) b->curChunk = -1;
+/*void collectGarbage(struct board *b){*/
+	/*b->untilAutoGC = GCRUNFREQ;*/
+	/*int marked[b->size];*/
+	/*int markednum = 0;*/
+	/*for(int i = 0; i < b->size; i++){*/
+		/*struct chunk *c = getChunk(b, i);*/
+		/*dprintf("GC: Testing Chunk %i " COORDINATES ":\n", i, c->locx, c->locy);*/
+		/*if(chunkEmpty(c)){*/
+			/*dprintf("GC: EMPTY!\n");*/
+			/*markednum++;*/
+			/*marked[i] = 1;*/
+			/*//This chunk will be deleted so remove its links*/
+			/*for(int j = 0; j < 8; j++){*/
+				/*if(c->neighbors[j]){*/
+					/*c->neighbors[j]->neighbors[neighborOpposite(j)] = NULL;*/
+				/*}*/
+			/*}*/
+		/*}*/
+	/*}*/
+	/*if(marked[b->curChunk]) b->curChunk = -1;*/
 
-	if(markednum < b->size){
-		int first = 0;
-		int last = b->size;
-		while(1){
-			while(first < last && !marked[first]) first++;
-			while(last > first && marked[last]) last--;
-			if(first >= last) break;
-			if(b->curChunk == last){
-				b->curChunk = first;
-			}
-			struct chunk *firstChunk = getChunk(b, first);
-			memcpy(firstChunk, getChunk(b, last), sizeof(struct chunk));
-			firstChunk->boardOffset = first;
-			for(int i = 0; i < 8; i++){
-				if(firstChunk->neighbors[i]){
-					//make all neighbors have the new pointer
-					firstChunk->neighbors[i]->neighbors[neighborOpposite(i)] = firstChunk;
-				}
-			}
+	/*if(markednum < b->size){*/
+		/*int first = 0;*/
+		/*int last = b->size;*/
+		/*while(1){*/
+			/*while(first < last && !marked[first]) first++;*/
+			/*while(last > first && marked[last]) last--;*/
+			/*if(first >= last) break;*/
+			/*if(b->curChunk == last){*/
+				/*b->curChunk = first;*/
+			/*}*/
+			/*struct chunk *firstChunk = getChunk(b, first);*/
+			/*memcpy(firstChunk, getChunk(b, last), sizeof(struct chunk));*/
+			/*firstChunk->boardOffset = first;*/
+			/*for(int i = 0; i < 8; i++){*/
+				/*if(firstChunk->neighbors[i]){*/
+					/*//make all neighbors have the new pointer*/
+					/*firstChunk->neighbors[i]->neighbors[neighborOpposite(i)] = firstChunk;*/
+				/*}*/
+			/*}*/
+			/*first++;*/
+		/*}*/
+		/*b->size -= markednum;*/
+	/*}else{*/
+		/*b->curChunk = -1;*/
+		/*b->size = 0;*/
+	/*}*/
+	/*resizeBoardMin(b, b->size);*/
+/*}*/
+
+void collectGarbage(struct board *b){
+	if(b->size == 0) return;
+	int first = 0;
+	int end = b->size - 1;
+	for(;;){
+		while(!chunkEmpty(getChunk(b, first))){
 			first++;
 		}
-		b->size -= markednum;
-	}else{
-		b->curChunk = -1;
-		b->size = 0;
+		while(chunkEmpty(getChunk(b, end))){
+			end--;
+		}
+		if(first >= end) break;
+		size_t diff = (end - first) * sizeof(struct chunk);
+		memcpy(getChunk(b, first), getChunk(b, end), sizeof(struct chunk));
+		for(int i = 0; i < 8; i++){
+			getChunk(b, first)->neighbors[i] -= diff;
+		}
 	}
+	b->untilAutoGC = GCRUNFREQ;
 	resizeBoardMin(b, b->size);
-	return markednum;
 }
 
 int resizeBoardMin(struct board *b, int new){
 	int newmax = DEFAULTWIDTH;
-	while(newmax < new){
-		newmax <<= 1;
-	}
+	while(newmax < new) newmax <<= 1;
 	return resizeBoard(b, newmax);
 }
 
@@ -234,7 +250,7 @@ static void drawChunkData(const struct chunk *c){
 	drawCross(c, NE_UL, 0, 0, '\\');
 	drawCross(c, NE_DL, 0, 2, '/');
 	drawCross(c, NE_HERE, 1, 1, '*');
-	mvprintw(CHUNKSIZE, 4, "At (%2i, %2i)",
+	mvprintw(CHUNKSIZE, 4, "At " COORDINATES,
 		c->locx, c->locy
 	);
 }

@@ -15,16 +15,15 @@ static onFinishInput cbFinish;
 static enum INM prevMode;
 static void getInput(onFinishInput cb){
 	prevMode = INPUTMODE;
-	INPUTMODE = INM_TYPE;
+	setInputMode(INM_TYPE);
 	cbFinish = cb;
 	inputLength = 0;
-	memset(inputBuffer, 0, INPUTMAX);
+	*inputBuffer = '\0';
 }
 
 static void renameBoardCB(struct board *b, int len, const char *input){
 	(void) len;
-	strncpysafe(b->name, input, 32);
-	dprintf("AT RENAME");
+	strncpysafe(b->name, input, BOARDNAMELENGTH);
 }
 
 static void normalHelp(){
@@ -36,6 +35,11 @@ static void normalHelp(){
 	cprintf("       ? - Help; ESC/Enter- Draw       ");
 	cprintf("---------------------------------------");
 }
+
+#define SHAREDKEYS \
+	case 'j': cprintf("Reading board..."); readBoard(b); break; \
+	case 'k': cprintf("Writing board..."); writeBoard(b); break; \
+	case 'r': getInput(renameBoardCB); break; \
 
 static inline int getInputNORM(struct board *b, int c){
 	switch(c){
@@ -53,11 +57,14 @@ static inline int getInputNORM(struct board *b, int c){
 	case 'q': return 0; //Quit
 	case 'g': cprintf("Running GC..."); collectGarbage(b); break;
 	case 'f': cprintf("Chosen random chunk"); b->curChunk = 0; break;
-	case 'j': cprintf("Reading board..."); readBoard(b); break;
-	case 'k': cprintf("Writing board..."); writeBoard(b); break;
-	case 'r': getInput(renameBoardCB); break;
-	case '\n': case 27: INPUTMODE = INM_DRAW; break;
+	case '\n': case 27:
+		if(b->size == 0) addChunk(b, 0, 0, NULL);
+		if(b->curChunk == -1) b->curChunk = 0;
+		setInputMode(INM_DRAW);
+	break;
 	case '?': normalHelp(); break;
+
+	SHAREDKEYS
 	}
 
 	return 1;
@@ -65,10 +72,11 @@ static inline int getInputNORM(struct board *b, int c){
 
 static int drawX, drawY;
 #define RINGMASK (CHUNKSIZE - 1)
-#define RINGVAL(i) (RINGMASK & i)
+#define RINGVAL(i) (RINGMASK & (i))
 
-#define MOVEBUF(draw, chk, chdx, chdy) \
-	if(RINGVAL(draw) == chk) {\
+#define MOVEBUF(op, draw, chk, chdx, chdy) \
+	draw = RINGVAL(draw op 1); \
+	if(draw == chk) {\
 		addChunk( \
 			b, \
 			curChunk(b)->locx + chdx, \
@@ -82,36 +90,40 @@ static void drawingHelp(){
 	cprintf("----------Drawing mode help------------");
 	cprintf("        WASD/Arrow keys to move        ");
 	cprintf("          Z - Draw; X - Erase          ");
+	cprintf("    J - Read; K - Write; R - Rename    ");
 	cprintf("      ? - Help; ESC/Enter - Normal     ");
 	cprintf("---------------------------------------");
 }
 
 static inline int getInputDRAW(struct board *b, int c){
 	switch(c){
-	case 'w': case KEY_UP:    MOVEBUF(--drawY, RINGMASK,  0, -1); break;
-	case 's': case KEY_DOWN:  MOVEBUF(++drawY,        0,  0,  1); break;
-	case 'a': case KEY_LEFT:  MOVEBUF(--drawX, RINGMASK, -1,  0); break;
-	case 'd': case KEY_RIGHT: MOVEBUF(++drawX,        0,  1,  0); break;
+	case 'w': case KEY_UP:    MOVEBUF(-, drawY, RINGMASK,  0, -1); break;
+	case 's': case KEY_DOWN:  MOVEBUF(+, drawY,        0,  0,  1); break;
+	case 'a': case KEY_LEFT:  MOVEBUF(-, drawX, RINGMASK, -1,  0); break;
+	case 'd': case KEY_RIGHT: MOVEBUF(+, drawX,        0,  1,  0); break;
 	case 'z': curChunk(b)->board[at(drawX, drawY)] = 1; break;
 	case 'x': curChunk(b)->board[at(drawX, drawY)] = 0; break;
-	case '\n': case 27: INPUTMODE = INM_NORMAL; break;
+	case '\n': case 27: setInputMode(INM_NORMAL); break;
 	case '?': drawingHelp(); break;
+
+	SHAREDKEYS
 	}
 	return 1;
 }
 
+#define INPUTLINE (CHUNKSIZE + 3)
+
 void inputRenderer(void){
-	mvaddstr(CHUNKSIZE + 3, 0, getInputModeName());
+	mvaddstr(INPUTLINE, 0, getInputModeName());
+	int start = strlen(getInputModeName()) + 1;
 	switch(INPUTMODE){
 	case INM_TYPE:;
-		int len = strlen(getInputModeName());
-		char b[4];
-		sprintf(b, "%i", inputLength);
-		mvaddstr(CHUNKSIZE + 3, len + 1, inputBuffer);
-		mvaddstr(CHUNKSIZE + 3, len + 2 + inputLength, b);
+		mvaddstr(INPUTLINE, start, inputBuffer);
+		mvprintw(INPUTLINE, start + 1 + inputLength, "%i", inputLength);
 	break;
 	case INM_DRAW:
-		mvaddch(RINGVAL(drawY), RINGVAL(drawX), '%');
+		mvprintw(INPUTLINE, start, COORDINATES, drawX, drawY);
+		mvaddch(drawY, drawX, '%');
 	break;
 	case INM_NORMAL:
 	break;
@@ -128,10 +140,13 @@ static inline int getInputTYPE(struct board *b, int c){
 	case '\n':
 		cbFinish(b, inputLength, inputBuffer);
 	case 27:
-		INPUTMODE = prevMode;
+		setInputMode(prevMode);
 	break;
 	default:
-		if(inputLength < INPUTMAX) inputBuffer[inputLength++] = c;
+		if(inputLength < INPUTMAX){
+			inputBuffer[inputLength++] = c;
+			inputBuffer[inputLength] = '\0';
+		}
 	}
 	return 1;
 }
@@ -144,4 +159,16 @@ int input(struct board *b){
 		case INM_TYPE: return getInputTYPE(b, c);
 	}
 	return 1;//TODO error
+}
+
+void setInputMode(enum INM mode){
+	switch(mode){
+		case INM_NORMAL:
+		break;
+		case INM_DRAW:
+		break;
+		case INM_TYPE:
+		break;
+	}
+	INPUTMODE = mode;
 }

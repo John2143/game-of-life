@@ -27,6 +27,7 @@
 
 #define min(x, y) (((x) > (y)) ? (y) : (x))
 #define max(x, y) (((x) < (y)) ? (y) : (x))
+#define clamp(x, y, z) (min(z, max(x, y)))
 
 #ifndef NODEBUG
 #	include <stdio.h>
@@ -36,6 +37,10 @@
 #else
 #	define dprintf(...) ;
 #endif
+
+#define strncpysafe(dst, src, len) \
+	*(dst) = '\0'; \
+	strncat(dst, src, len);
 
 typedef unsigned char bval;
 typedef unsigned int colormap;

@@ -7,7 +7,7 @@
 #include <board.h>
 #include <chunk.h>
 
-#define PACKEDCHUNKSIZE (CHUNKSIZE2 / CHAR_BIT + 40)
+#define PACKEDCHUNKSIZE (CHUNKSIZE2 / CHAR_BIT + 8)
 
 //Write the board pointer to data
 //Will be saved in boards/(b->name).golb

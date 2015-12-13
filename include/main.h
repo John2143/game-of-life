@@ -11,12 +11,12 @@
 
 //Must be initiated here
 
-//Size of the global status strings, excluding \0
+//Size of the global status strings, including \0
 #define GSTRINGSIZE 64
+int CONSIZE; //# of lines that the console can hold
 
-//Set the two string that are displayed below the chunk graph
-//TODO: Should this be const char *restrict?
-void setgStrings(const char *a, const char *b);
+void cprintf(const char *format, ...);
+void consoleRenderer(void);
 
 int main(int argc, char **argv);
 

@@ -6,10 +6,10 @@ int generateNewChunks(struct board *b){
 		struct chunk *c = getChunk(b, i);
 		int x = c->locx, y = c->locy;
 		int k = newChunks(c);
-		if(k & 0x1) addChunk(b, x + 1, y);//Right
-		if(k & 0x2) addChunk(b, x - 1, y);//Left
-		if(k & 0x4) addChunk(b, x, y + 1);//Down
-		if(k & 0x8) addChunk(b, x, y - 1);//Up
+		if(k & 0x1) addChunk(b, x + 1, y, NULL);//Right
+		if(k & 0x2) addChunk(b, x - 1, y, NULL);//Left
+		if(k & 0x4) addChunk(b, x, y + 1, NULL);//Down
+		if(k & 0x8) addChunk(b, x, y - 1, NULL);//Up
 	}
 	return b->size - size;
 }
@@ -26,6 +26,12 @@ void iterateBoard(struct board *board){
 	}
 	free(change);
 	board->iterations++;
+}
+
+void iterateBoardTimes(struct board *board, int times){
+	while(times--){
+		iterateBoard(board);
+	}
 }
 
 int collectGarbage(struct board *b){
@@ -78,9 +84,7 @@ int collectGarbage(struct board *b){
 		b->curChunk = -1;
 		b->size = 0;
 	}
-
 	resizeBoardMin(b, b->size);
-
 	return markednum;
 }
 
@@ -93,7 +97,6 @@ int resizeBoardMin(struct board *b, int new){
 }
 
 int resizeBoard(struct board *b, int new){
-	dprintf("Resizing board from %i to %i\n", b->maxSize, new);
 	b->maxSize = new;
 	struct chunk *oldplace = b->chunks; //this is probably super illegal
 	b->chunks = realloc(b->chunks, new * sizeof(struct chunk));
@@ -127,14 +130,20 @@ static int checkNeighborhood(
 	return 0;
 }
 
-void addChunk(struct board *b, int x, int y){
+void addChunk(struct board *b, int x, int y, const bval *mem){
 	if(getChunkPos(b, x, y) >= 0) return; //exists
 	if(b->size >= b->maxSize){
 		resizeBoard(b, b->maxSize << 1);
 	}
 
 	struct chunk *n = nextChunk(b);
-	memset(&n->board, 0, CHUNKSIZE2);
+
+	if(mem){
+		memcpy(n->board, mem, CHUNKSIZE2);
+	}else{
+		memset(n->board, 0, CHUNKSIZE2);
+	}
+
 	n->locx = x;
 	n->locy = y;
 	n->boardOffset = b->size;
@@ -152,6 +161,7 @@ void addChunk(struct board *b, int x, int y){
 }
 
 void setBoardName(struct board *b, const char *name){
+	/*cprintf("Board name changed to %s.", name);*/
 	strcpy(b->name, name);
 }
 

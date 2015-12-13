@@ -31,11 +31,12 @@ struct board{
 //TODO: Make memory more efficient by calculating a better order
 //TODO: Decide how often to run the GC
 void iterateBoard(struct board *board);
+void iterateBoardTimes(struct board *board, int times);
 //This will generate new chunks if they will be needed in the next iteration
 //Returns the number of chunks generated.
 int generateNewChunks(struct board *b);
 //Adds a new chunk to the board, possibly doubling the stack size if it needs room
-void addChunk(struct board *b, int x, int y);
+void addChunk(struct board *b, int x, int y, const bval *mem);
 //Creates a new empty board. Must call freeBoard() to release the pointer.
 struct board *createBoard(const char *name);
 //Creates the empty board data

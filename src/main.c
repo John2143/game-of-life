@@ -1,12 +1,20 @@
 #include "main.h"
 
-//This sucks
-//TODO make this not suck
-static char gstr[GSTRINGSIZE * 2];
-void setgStrings(const char *a, const char *b){
-	memset(gstr, 0, GSTRINGSIZE * 2);
-	strcpy(gstr, a);
-	strcpy(gstr + GSTRINGSIZE, b);
+static int conline;
+static char (*consoleBuffer)[GSTRINGSIZE];
+void cprintf(const char *format, ...){
+	va_list args;
+	va_start(args, format);
+	//GSTRING - 1 will ensure that the console will always end in a null terminator
+	//  because this is called with calloc.
+	vsnprintf((consoleBuffer[conline++ % CONSIZE]), GSTRINGSIZE-1, format, args);
+	va_end(args);
+}
+
+void consoleRenderer(void){
+	for(int j = 0; j < CONSIZE; j++){
+		mvaddstr(CHUNKSIZE + 5 + j, 0, consoleBuffer[(j + conline) % CONSIZE]);
+	}
 }
 
 int main(int argc, char **argv){
@@ -29,20 +37,18 @@ int main(int argc, char **argv){
 	WINDOWMAX_Y = getmaxy(stdscr);
 	WINDOWMAX_X = getmaxx(stdscr);
 
+	INPUTMODE = INM_NORMAL;
+
 	dprintf("Window size is %ix%i\n", WINDOWMAX_X, WINDOWMAX_Y);
 
 	USECOLOR = 1;
 	GCRUNFREQ = 50;
-
-	setgStrings(
-		"Welcome to the game of life! Press space/zxc to begin!",
-		"Use arrows/wasd to move. Press q to quit."
-	);
+	CONSIZE = WINDOWMAX_Y - CHUNKSIZE - 5;
 
 	char *PATTERN = NULL;
 	char *BOARDNAME = NULL;
 	int getoptval;
-	while((getoptval = getopt(argc, argv, "cg:p:n:")) != -1){
+	while((getoptval = getopt(argc, argv, "cg:p:n:s:")) != -1){
 		switch(getoptval)
 		{
 		//Disable color
@@ -58,8 +64,17 @@ int main(int argc, char **argv){
 		case 'g':
 			GCRUNFREQ = atoi(optarg);
 		break;
+		case 's':
+			CONSIZE = atoi(optarg);
+		break;
 		}
 	}
+
+	CONSIZE = clamp(CONSIZE, 5, 15);
+	consoleBuffer = calloc(CONSIZE * GSTRINGSIZE, 1);
+
+	cprintf("Welcome to the game of life! Press space/zxc to begin!");
+	cprintf("Use arrows/wasd to move. Press q to quit.");
 
 	struct board *b;
 	if(PATTERN){
@@ -70,7 +85,7 @@ int main(int argc, char **argv){
 	}else{
 		b = createBoard(BOARDNAME);
 		initializeBoard(b);
-		addChunk(b, 0, 0);
+		addChunk(b, 0, 0, NULL);
 		setBoard(b, 0, 0);
 	}
 
@@ -87,14 +102,17 @@ int main(int argc, char **argv){
 	while(1){
 		erase();
 		drawBoard(b);
-		mvaddnstr(CHUNKSIZE + 3, 0, gstr, GSTRINGSIZE);
-		mvaddnstr(CHUNKSIZE + 4, 0, gstr + GSTRINGSIZE, GSTRINGSIZE);
+		inputRenderer();
+		consoleRenderer();
 		refresh();
-		int in = input(b);
-		if(in == IN_QUIT || in == IN_DONE) goto CLEANUP;
+		if(!input(b)) goto CLEANUP;
 	}
 
 	CLEANUP:
+#ifdef DEBUG
+	fclose(DEBUG_FILE);
+#endif
+	free(consoleBuffer);
 	freeBoard(b);
 	endwin();
 	printf("Program complete");

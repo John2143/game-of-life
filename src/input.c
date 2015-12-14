@@ -26,12 +26,15 @@ static void renameBoardCB(struct board *b, int len, const char *input){
 	strncpysafe(b->name, input, BOARDNAMELENGTH);
 }
 
+#define SHAREDKEYSPRINT \
+	cprintf("    J - Read; K - Write; R - Rename    ");
+
 static void normalHelp(){
 	cprintf("-----------Normal mode help------------");
 	cprintf("        WASD/Arrow keys to move        ");
 	cprintf("     Space ZXCV to iterate forward     ");
 	cprintf("    Q - Quit; G - Garbage Collector    ");
-	cprintf("    J - Read; K - Write; R - Rename    ");
+	SHAREDKEYSPRINT
 	cprintf("       ? - Help; ESC/Enter- Draw       ");
 	cprintf("---------------------------------------");
 }
@@ -56,10 +59,10 @@ static inline int getInputNORM(struct board *b, int c){
 
 	case 'q': return 0; //Quit
 	case 'g': cprintf("Running GC..."); collectGarbage(b); break;
-	case 'f': cprintf("Chosen random chunk"); b->curChunk = 0; break;
+	case 'f': cprintf("Chosen random chunk"); b->curChunk = b->first; break;
 	case '\n': case 27:
 		if(b->size == 0) addChunk(b, 0, 0, NULL);
-		if(b->curChunk == -1) b->curChunk = 0;
+		if(b->curChunk == NULL) b->curChunk = b->first;
 		setInputMode(INM_DRAW);
 	break;
 	case '?': normalHelp(); break;
@@ -79,8 +82,8 @@ static int drawX, drawY;
 	if(draw == chk) {\
 		addChunk( \
 			b, \
-			curChunk(b)->locx + chdx, \
-			curChunk(b)->locy + chdy, \
+			b->curChunk->locx + chdx, \
+			b->curChunk->locy + chdy, \
 			NULL \
 		); /* Will fail if the chunk exists*/ \
 		moveBoard(b, chdx, chdy); \
@@ -90,7 +93,7 @@ static void drawingHelp(){
 	cprintf("----------Drawing mode help------------");
 	cprintf("        WASD/Arrow keys to move        ");
 	cprintf("          Z - Draw; X - Erase          ");
-	cprintf("    J - Read; K - Write; R - Rename    ");
+	SHAREDKEYSPRINT
 	cprintf("      ? - Help; ESC/Enter - Normal     ");
 	cprintf("---------------------------------------");
 }
@@ -101,8 +104,8 @@ static inline int getInputDRAW(struct board *b, int c){
 	case 's': case KEY_DOWN:  MOVEBUF(+, drawY,        0,  0,  1); break;
 	case 'a': case KEY_LEFT:  MOVEBUF(-, drawX, RINGMASK, -1,  0); break;
 	case 'd': case KEY_RIGHT: MOVEBUF(+, drawX,        0,  1,  0); break;
-	case 'z': curChunk(b)->board[at(drawX, drawY)] = 1; break;
-	case 'x': curChunk(b)->board[at(drawX, drawY)] = 0; break;
+	case 'z': b->curChunk->board[at(drawX, drawY)] = 1; break;
+	case 'x': b->curChunk->board[at(drawX, drawY)] = 0; break;
 	case '\n': case 27: setInputMode(INM_NORMAL); break;
 	case '?': drawingHelp(); break;
 

@@ -32,27 +32,22 @@ struct chunk{
 	bval board[CHUNKSIZE2];
 	int locx, locy;
 	struct chunk *neighbors[8];
-	int boardOffset; //This can be calculated but is just stored here for speed
+	struct chunk *next;
+	struct chunk *last;
 };
 
+typedef struct chunk *scp;
+
 //Calculate an array of bvals that can be used to change the board
-void calculateChunk(const struct chunk *chunk, bval *change);
+void calculateChunk(const scp chunk, bval *change);
 //Use the change array to mutate the chunk using the rules
-void applyChange(struct chunk *chunk, const bval *change);
+void applyChange(scp chunk, const bval *change);
 //Draw the current chunk with its changemap
 //Running the program with -c will disasble colors
-void drawChunk(const struct chunk *chunk);
+void drawChunk(const scp chunk);
 //returns 0 if it is not empty
 //returns 1 if it is empty
-int chunkEmpty(const struct chunk *chunk);
-
-//Returns the chunks that will need to be created by the next move
-//helper function for generateNewChunks
-//returns
-//0bXXXX
-// U^  ^R
-//  D^^L
-int newChunks(const struct chunk *c);
+int chunkEmpty(const scp chunk);
 
 static const int neighborOppositeValues[] = {
 	NE_L, NE_R, NE_D, NE_U,

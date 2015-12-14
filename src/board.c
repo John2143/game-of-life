@@ -1,15 +1,29 @@
 #include "board.h"
 
+static int onEdge(const scp c, int i, int delta, int times){
+	while(times--){
+		if(c->board[i]) return 1;
+		i += delta;
+	}
+	return 0;
+}
+
 int generateNewChunks(struct board *b){
 	int size = b->size;
-	for(int i = 0; i < size; i++){
-		struct chunk *c = getChunk(b, i);
+	forEachChunk(b, c){
 		int x = c->locx, y = c->locy;
-		int k = newChunks(c);
-		if(k & 0x1) addChunk(b, x + 1, y, NULL);//Right
-		if(k & 0x2) addChunk(b, x - 1, y, NULL);//Left
-		if(k & 0x4) addChunk(b, x, y + 1, NULL);//Down
-		if(k & 0x8) addChunk(b, x, y - 1, NULL);//Up
+		if(onEdge(c, at_TR, CHUNKSIZE, CHUNKSIZE)){ //Right
+			addChunk(b, x + 1,     y, NULL);
+		}
+		if(onEdge(c, at_TL, CHUNKSIZE, CHUNKSIZE)){ //Left
+			addChunk(b, x - 1,     y, NULL);
+		}
+		if(onEdge(c, at_BL,         1, CHUNKSIZE)){ //Down
+			addChunk(b,     x, y + 1, NULL);
+		}
+		if(onEdge(c, at_TL,         1, CHUNKSIZE)){ //Up
+			addChunk(b,     x, y - 1, NULL);
+		}
 	}
 	return b->size - size;
 }
@@ -18,11 +32,13 @@ void iterateBoard(struct board *board){
 	if(!board->untilAutoGC--) collectGarbage(board);
 	generateNewChunks(board);
 	bval (*change)[CHUNKSIZE2] = malloc(board->size * CHUNKSIZE2 * sizeof(bval));
-	for(int i = 0; i < board->size; i++){
-		calculateChunk(getChunk(board, i), change[i]);
+	int i = 0;
+	forEachChunk(board, p){
+		calculateChunk(p, change[i++]);
 	}
-	for(int i = 0; i < board->size; i++){
-		applyChange(getChunk(board, i), change[i]);
+	i = 0;
+	forEachChunk(board, p){
+		applyChange(p, change[i++]);
 	}
 	free(change);
 	board->iterations++;
@@ -34,142 +50,80 @@ void iterateBoardTimes(struct board *board, int times){
 	}
 }
 
-/*void collectGarbage(struct board *b){*/
-	/*b->untilAutoGC = GCRUNFREQ;*/
-	/*int marked[b->size];*/
-	/*int markednum = 0;*/
-	/*for(int i = 0; i < b->size; i++){*/
-		/*struct chunk *c = getChunk(b, i);*/
-		/*dprintf("GC: Testing Chunk %i " COORDINATES ":\n", i, c->locx, c->locy);*/
-		/*if(chunkEmpty(c)){*/
-			/*dprintf("GC: EMPTY!\n");*/
-			/*markednum++;*/
-			/*marked[i] = 1;*/
-			/*//This chunk will be deleted so remove its links*/
-			/*for(int j = 0; j < 8; j++){*/
-				/*if(c->neighbors[j]){*/
-					/*c->neighbors[j]->neighbors[neighborOpposite(j)] = NULL;*/
-				/*}*/
-			/*}*/
-		/*}*/
-	/*}*/
-	/*if(marked[b->curChunk]) b->curChunk = -1;*/
-
-	/*if(markednum < b->size){*/
-		/*int first = 0;*/
-		/*int last = b->size;*/
-		/*while(1){*/
-			/*while(first < last && !marked[first]) first++;*/
-			/*while(last > first && marked[last]) last--;*/
-			/*if(first >= last) break;*/
-			/*if(b->curChunk == last){*/
-				/*b->curChunk = first;*/
-			/*}*/
-			/*struct chunk *firstChunk = getChunk(b, first);*/
-			/*memcpy(firstChunk, getChunk(b, last), sizeof(struct chunk));*/
-			/*firstChunk->boardOffset = first;*/
-			/*for(int i = 0; i < 8; i++){*/
-				/*if(firstChunk->neighbors[i]){*/
-					/*//make all neighbors have the new pointer*/
-					/*firstChunk->neighbors[i]->neighbors[neighborOpposite(i)] = firstChunk;*/
-				/*}*/
-			/*}*/
-			/*first++;*/
-		/*}*/
-		/*b->size -= markednum;*/
-	/*}else{*/
-		/*b->curChunk = -1;*/
-		/*b->size = 0;*/
-	/*}*/
-	/*resizeBoardMin(b, b->size);*/
-/*}*/
-
 void collectGarbage(struct board *b){
 	if(b->size == 0) return;
-	int first = 0;
-	int end = b->size - 1;
-	for(;;){
-		while(!chunkEmpty(getChunk(b, first))){
-			first++;
+	scp p = b->first, next;
+	while(p){
+		next = p->next;
+		if(chunkEmpty(p)){
+			if(b->curChunk == p) b->curChunk = NULL;
+			removeChunk(b, p);
 		}
-		while(chunkEmpty(getChunk(b, end))){
-			end--;
-		}
-		if(first >= end) break;
-		size_t diff = (end - first) * sizeof(struct chunk);
-		memcpy(getChunk(b, first), getChunk(b, end), sizeof(struct chunk));
-		for(int i = 0; i < 8; i++){
-			getChunk(b, first)->neighbors[i] -= diff;
-		}
+		p = next;
 	}
+
 	b->untilAutoGC = GCRUNFREQ;
-	resizeBoardMin(b, b->size);
-}
-
-int resizeBoardMin(struct board *b, int new){
-	int newmax = DEFAULTWIDTH;
-	while(newmax < new) newmax <<= 1;
-	return resizeBoard(b, newmax);
-}
-
-int resizeBoard(struct board *b, int new){
-	b->maxSize = new;
-	struct chunk *oldplace = b->chunks; //this is probably super illegal
-	b->chunks = realloc(b->chunks, new * sizeof(struct chunk));
-	if(!b->chunks) return -1;
-	int diff = b->chunks - oldplace;
-	if(diff){
-		for(int i = 0; i < b->size; i++){
-			for(int k = 0; k < 8; k++){
-				if(getChunk(b, i)->neighbors[k]){
-					getChunk(b, i)->neighbors[k] += diff;
-				}
-			}
-		}
-	}
-	return 0;
 }
 
 static int checkNeighborhood(
-	struct chunk *restrict a,
-	struct chunk *restrict b,
-	int x, int y, int j, int k
+	scp restrict a,
+	scp restrict b,
+	int bx, int by, int j, int k
 ){
 	//x = b->locx
 	//y = b->locy
-	if ((x + j == a->locx) && (y + k == a->locy)){
+	int ax = a->locx, ay = a->locy;
+	if ((bx + j == ax) && (by + k == ay)){
 		int del = neighborDelta(j, k);
-		a->neighbors[neighborOpposite(del)] = b;
 		b->neighbors[del] = a;
+		a->neighbors[neighborOpposite(del)] = b;
 		return 1;
 	}
 	return 0;
 }
 
-void addChunk(struct board *b, int x, int y, const bval *mem){
-	if(getChunkPos(b, x, y) >= 0) return; //exists
-	if(b->size >= b->maxSize){
-		resizeBoard(b, b->maxSize << 1);
+void removeChunk(struct board *b, scp c){
+	if(b->first == c) b->first = c->next;
+
+	if(c->next) c->next->last = c->last;
+	if(c->last) c->last->next = c->next;
+
+	for(int j = 0; j < 8; j++){
+		if(c->neighbors[j]){
+			c->neighbors[j]->neighbors[neighborOpposite(j)] = NULL;
+		}
 	}
 
-	struct chunk *n = nextChunk(b);
+	free(c);
+	b->size--;
+}
+
+void addChunk(struct board *b, int x, int y, const bval *mem){
+	if(getChunkAtPos(b, x, y) != NULL) return; //exists
+
+	scp next = malloc(sizeof(struct chunk));
+
+	next->locx = x;
+	next->locy = y;
+
+	next->last = NULL;
+	next->next = b->first;
+	b->first = next;
+
 
 	if(mem){
-		memcpy(n->board, mem, CHUNKSIZE2);
+		memcpy(next->board, mem, CHUNKSIZE2);
 	}else{
-		memset(n->board, 0, CHUNKSIZE2);
+		memset(next->board, 0, CHUNKSIZE2);
 	}
 
-	n->locx = x;
-	n->locy = y;
-	n->boardOffset = b->size;
-	int i;
-	for(i = 0; i < 8; i++){
-		n->neighbors[i] = NULL;
+	for(int i = 0; i < 8; i++){
+		next->neighbors[i] = NULL;
 	}
-	for(i = 0; i < b->size; i++){
+
+	forEachChunk(b, p){
 		#define X(j, k) \
-		if(checkNeighborhood(&b->chunks[i], n, x, y, j, k)) continue;
+		if(checkNeighborhood(p, next, x, y, j, k)) continue;
 		EXPAND_DIRS
 		#undef X
 	}
@@ -183,7 +137,7 @@ void setBoardName(struct board *b, const char *name){
 
 struct board *createBoard(const char *name){
 	struct board *b = malloc(sizeof *b);
-	b->chunks = NULL;
+	b->first = NULL;
 	b->untilAutoGC = GCRUNFREQ;
 	if(name) setBoardName(b, name); else setBoardName(b, "empty");
 	return b;
@@ -191,44 +145,52 @@ struct board *createBoard(const char *name){
 
 void initializeBoard(struct board *b){
 	b->size = 0;
-	resizeBoardMin(b, 0);
 	b->iterations = 0;
-	b->curChunk = -1;
+	b->curChunk = NULL;
+}
+
+void emptyBoard(struct board *board){
+	scp p = board->first, next;
+	while(p){
+		next = p->next;
+		free(p);
+		p = next;
+	}
 }
 
 void freeBoard(struct board *board){
-	free(board->chunks);
+	emptyBoard(board);
 	free(board);
 }
 
-int getChunkPos(const struct board *b, int x, int y){
-	for(int i = 0; i < b->size; i++){
-		if(getChunk(b, i)->locx == x && getChunk(b, i)->locy == y){
-			return i;
+scp getChunkAtPos(const struct board *b, int x, int y){
+	forEachChunk(b, p){
+		if(p->locx == x && p->locy == y){
+			return p;
 		}
 	}
-	return -1;
+	return NULL;
 }
 
 int moveBoard(struct board *b, int x, int y){
 	if(x == 0 && y == 0) return 0;
 	if((x == -1 || x == 0 || x == 1) && (y == -1 || y == 0 || y == 1)){
-		struct chunk *ch = curChunk(b)->neighbors[neighborDelta(x, y)];
+		scp ch = b->curChunk->neighbors[neighborDelta(x, y)];
 		if(!ch) return -1;
-		b->curChunk = ch->boardOffset;
+		b->curChunk = ch;
 		return 0;
 	}
-	return setBoard(b, curChunk(b)->locx + x, curChunk(b)->locy + y);
+	return setBoard(b, b->curChunk->locx + x, b->curChunk->locy + y);
 }
 
 int setBoard(struct board *b, int x, int y){
-	int pos = getChunkPos(b, x, y);
-	if(pos < 0) return -1;
-	b->curChunk = pos;
+	scp p = getChunkAtPos(b, x, y);
+	if(p == NULL) return -1;
+	b->curChunk = p;
 	return 0;
 }
 
-static void drawCross(const struct chunk *ch, int dir, int x, int y, char c){
+static void drawCross(const scp ch, int dir, int x, int y, char c){
 	int hasneighbor = dir == NE_HERE ? 1 : ch->neighbors[dir] != NULL;
 	if(USECOLOR){
 		int col = hasneighbor ? COL_GREEN : COL_YELLOW;
@@ -240,7 +202,7 @@ static void drawCross(const struct chunk *ch, int dir, int x, int y, char c){
 	}
 }
 
-static void drawChunkData(const struct chunk *c){
+static void drawChunkData(const scp c){
 	drawCross(c, NE_L,  0, 1, '-');
 	drawCross(c, NE_R,  2, 1, '-');
 	drawCross(c, NE_U,  1, 0, '|');
@@ -256,9 +218,8 @@ static void drawChunkData(const struct chunk *c){
 }
 
 static void drawBoardData(const struct board *b){
-	mvprintw(CHUNKSIZE + 1, 4, "Iteration %i Index %i Size %i NextGC %i",
+	mvprintw(CHUNKSIZE + 1, 4, "Iteration %i Size %i NextGC %i",
 		b->iterations,
-		b->curChunk,
 		b->size,
 		b->untilAutoGC
 	);
@@ -268,18 +229,13 @@ static void drawBoardData(const struct board *b){
 }
 
 void drawBoard(const struct board *b){
-	if(b->curChunk > b->size){
-		mvaddstr(1, 1, "Internal error.");
-	}else if(b->size == 0){
+	if(b->size == 0){
 		mvaddstr(1, 1, "This board is empty.");
-		drawBoardData(b);
-	}else if(b->curChunk == -1){
+	}else if(b->curChunk == NULL){
 		mvaddstr(1, 1, "There is no currently selected chunk.");
-		drawBoardData(b);
 	}else{
-		struct chunk *c = curChunk(b);
-		drawChunk(c);
-		drawChunkData(c);
-		drawBoardData(b);
+		drawChunk(b->curChunk);
+		drawChunkData(b->curChunk);
 	}
+	drawBoardData(b);
 }

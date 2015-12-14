@@ -10,23 +10,15 @@
 #define BOARDNAMELENGTH 64
 
 struct board{
-	struct chunk *chunks;
+	scp first;
+	scp curChunk;
 	int size;
-	int maxSize;
-	int curChunk;
 	int iterations;
 	int untilAutoGC;
 	char name[BOARDNAMELENGTH];
 };
 
-//Return a pointer to the index-th chunk
-#define getChunk(b, index) (&(b)->chunks[index])
-//#define getChunk(b, index) ((b)->chunk + (index) * sizeof(struct chunk))
-
-//The current chunk
-#define curChunk(b) getChunk(b, b->curChunk)
-//Get the next uninitialized memeory block. MAY BE OUT OF THE RANGE OF b->chunks
-#define nextChunk(b) getChunk(b, b->size)
+#define forEachChunk(b, p) for(scp p = b->first; p != NULL; p = p->next)
 
 //Mutate the board by one time unit.
 //TODO: Make memory more efficient by calculating a better order
@@ -36,8 +28,10 @@ void iterateBoardTimes(struct board *board, int times);
 //This will generate new chunks if they will be needed in the next iteration
 //Returns the number of chunks generated.
 int generateNewChunks(struct board *b);
-//Adds a new chunk to the board, possibly doubling the stack size if it needs room
+//Adds a new chunk to the board
 void addChunk(struct board *b, int x, int y, const bval *mem);
+//Removes a chunk from the board
+void removeChunk(struct board *b, scp c);
 //Creates a new empty board. Must call freeBoard() to release the pointer.
 struct board *createBoard(const char *name);
 //Creates the empty board data
@@ -53,8 +47,8 @@ int moveBoard(struct board *b, int x, int y);
 //Move the board to the position of x, y. O(getChunkAtPos())
 //returns 0 for ok, -1 for failure
 int setBoard(struct board *b, int x, int y);
-//Get the chunk at the specified point. -1 on empty. O(n)
-int getChunkPos(const struct board *b, int x, int y);
+//Get the chunk at the specified point. NULL on fail
+scp getChunkAtPos(const struct board *b, int x, int y);
 //Resize the board to the new provided size.
 //Returns -1 if it failed TODO: Exit program on -1
 int resizeBoard(struct board *b, int new);

@@ -13,7 +13,7 @@ static int32_t unpack32i(const char *mem){
 	return (int32_t) unpack32u(mem);
 }
 
-static void packChunk(const struct chunk *c, char *mem){
+static void packChunk(const scp c, char *mem){
 	int i = CHUNKSIZE2;
 	memset(mem, 0, CHUNKSIZE2 / CHAR_BIT);
 	int bit = CHAR_BIT;
@@ -33,7 +33,7 @@ static void packChunk(const struct chunk *c, char *mem){
 	/*}*/
 }
 
-static void unpackChunk(struct chunk *c, const char *mem){
+static void unpackChunk(scp c, const char *mem){
 	int i = CHUNKSIZE2;
 	int bit = CHAR_BIT;
 	while(i){
@@ -60,53 +60,57 @@ static void unpackChunk(struct chunk *c, const char *mem){
 #define MEMSIZE max(PACKEDCHUNKSIZE, BOARDNAMELENGTH + 15)
 static char mem[MEMSIZE];
 
-int writeBoard(const struct board *b){
+enum ioResult writeBoard(const struct board *b){
 	sprintf(mem, "boards/%s.golb", b->name);
 	FILE *f = fopen(mem, "wb");
-	if(!f) return -1;
+	if(!f) return IO_FILE;
 
 	pack32(mem + 0x00, 1);
 	pack32(mem + 0x04, b->size);
 	pack32(mem + 0x08, b->iterations);
-	pack32(mem + 0x0b, b->curChunk);
+
+	int chunkDist = 0;
+	forEachChunk(b, p){
+		if(p == b->curChunk) break;
+		chunkDist++;
+	}
+
+	pack32(mem + 0x0b, chunkDist);
 	fwrite(mem, 1, 0x20, f);
 
 	/*fwrite(b->name, 1, 0x20, f);*/
 
-	for(int i = 0; i < b->size; i++){
-		packChunk(getChunk(b, i), mem);
+	forEachChunk(b, p){
+		packChunk(p, mem);
 		fwrite(mem, 1, sizeof(mem), f);
 	}
 
 	fclose(f);
-	return 0;
+	return IO_OK;
 }
 
-int readBoard(struct board *b){
+enum ioResult readBoard(struct board *b){
 	sprintf(mem, "boards/%s.golb", b->name);
 	FILE *f = fopen(mem, "rb");
-	if(!f) return -1;
+	if(!f) return IO_FILE;
 
 	fread(mem, 1, 0x20, f);
 	/*int mapver = unpack32u(mem + 0x0);*/
-	int newsize   = unpack32u(mem + 0x4);
-	b->iterations = unpack32u(mem + 0x8);
-	b->curChunk   = unpack32i(mem + 0xb);
+	b->size       = unpack32u(mem + 0x04);
+	b->iterations = unpack32u(mem + 0x08);
+	int chunkDist = unpack32u(mem + 0x0b);
+	b->first = NULL;
+
+	if(chunkDist > b->size) return IO_HEADER;
+
 	dprintf("Size %i, Iterations %i, curChunk %i\n",
-		b->size, b->iterations, b->curChunk
+		b->size, b->iterations, chunkDist
 	);
 
-	/*fread(mem, 1, 0x20, f);*/
-	/*setBoardName(b, mem);*/
-
-	resizeBoardMin(b, newsize);
-	b->size = 0;
-
-	dprintf("MaxSize %i\n", b->maxSize);
 	fflush(DEBUG_FILE);
 
 	struct chunk shellChunk;
-	for(int i = 0; i < newsize; i++){
+	for(int i = 0; i < b->size; i++){
 		fread(mem, 1, PACKEDCHUNKSIZE, f);
 		unpackChunk(&shellChunk, mem);
 		dprintf("%i, %i\n", shellChunk.locx, shellChunk.locy);
@@ -119,8 +123,11 @@ int readBoard(struct board *b){
 		addChunk(b, shellChunk.locx, shellChunk.locy, shellChunk.board);
 	}
 
+	b->curChunk = b->first;
+	while(chunkDist--) b->curChunk = b->curChunk->next;
+
 	fclose(f);
-	return 0;
+	return IO_OK;
 }
 
 struct board *readNewBoard(const char *name){

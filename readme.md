@@ -1,6 +1,6 @@
 Planned features:
  - Better navigation menu
- - Dynamic editor
+ - ~~Dynamic editor~~
  - ~~Saving/loading~~
 
 Dreams:
@@ -12,3 +12,4 @@ Command line options
  - `-g freq` Change the frequency of the garbage collector.
  - `-p pattern` Begin with this starting pattern. Patterns can be found in `boards/`.
  - `-n boardname` Set the board name to this string.
+ - `-s size` Console size.

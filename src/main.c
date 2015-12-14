@@ -45,8 +45,8 @@ int main(int argc, char **argv){
 	GCRUNFREQ = 50;
 	CONSIZE = WINDOWMAX_Y - CHUNKSIZE - 5;
 
-	char *PATTERN = NULL;
-	char *BOARDNAME = NULL;
+	const char *PATTERN = NULL;
+	const char *BOARDNAME = NULL;
 	int getoptval;
 	while((getoptval = getopt(argc, argv, "cg:p:n:s:")) != -1){
 		switch(getoptval)

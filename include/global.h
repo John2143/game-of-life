@@ -44,9 +44,6 @@
 	*(dst) = '\0'; \
 	strncat(dst, src, len);
 
-typedef unsigned char bval;
-typedef unsigned int colormap;
-
 char USECOLOR;
 int GCRUNFREQ;
 

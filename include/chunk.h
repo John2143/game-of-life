@@ -28,6 +28,9 @@
 #define NE_HERE 8
 #define NE_NONE 9
 
+typedef unsigned char bval;
+typedef unsigned int colormap;
+
 struct chunk{
 	bval board[CHUNKSIZE2];
 	int locx, locy;
